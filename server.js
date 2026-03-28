@@ -83,6 +83,9 @@ app.use(express.json());
 app.use(express.static("public"));
 app.use("/uploads", express.static("uploads"));
 
+app.get("/", (req, res) => {
+    res.sendFile(__dirname + "/public/index.html");
+});
 
 
 mongoose.connect(process.env.MONGO_URI)
@@ -1543,8 +1546,8 @@ app.post("/api/upload-profile", upload.single("image"), async (req, res) => {
 });
 
 
-const PORT = 5050;
+const PORT = process.env.PORT;
 
-server.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+server.listen(PORT, "0.0.0.0", () => {
+    console.log("Server running on port " + PORT);
 });
