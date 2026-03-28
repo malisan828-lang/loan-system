@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <!-- ชื่อแอป -->
+<meta name="apple-mobile-web-app-title" content="Loan System">
+
+<!-- เปิดแบบ fullscreen -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+<!-- สี status bar -->
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+<!-- ไอคอน -->
+<link rel="apple-touch-icon" href="assets/icons/logo.png">
+<link rel="manifest" href="manifest.json">
+<meta charset="UTF-8">
+<title>สมัครสมาชิก | Loan System</title>
+<link rel="icon" type="image/png" href="assets/icons/favicon.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body{
+    margin:0;
+    font-family:'Segoe UI',sans-serif;
+    background:linear-gradient(135deg,#0f172a,#1e293b);
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    color:white;
+}
+
+.auth-box{
+    width:100%;
+    max-width:340px;
+    background:rgba(15,23,42,0.95);
+    padding:28px 24px;
+    border-radius:16px;
+    box-shadow:0 15px 40px rgba(0,0,0,0.5);
+}
+
+.auth-box h2{
+    text-align:center;
+    margin-bottom:6px;
+    font-size:20px;
+}
+
+.auth-box p{
+    text-align:center;
+    font-size:12px;
+    opacity:0.6;
+    margin-bottom:18px;
+}
+
+.input-group{
+    margin-bottom:14px;
+}
+
+.input-group label{
+    font-size:12px;
+    opacity:0.7;
+}
+
+.input-group input{
+    width:100%;
+    padding:10px 12px;
+    margin-top:5px;
+    border-radius:8px;
+    border:1px solid rgba(255,255,255,0.1);
+    background:#1e293b;
+    color:white;
+    outline:none;
+    font-size:13px;
+    box-sizing:border-box;
+}
+
+.input-group input:focus{
+    border:1px solid #3b82f6;
+    box-shadow:0 0 6px rgba(59,130,246,0.4);
+}
+
+.primary-btn{
+    width:100%;
+    padding:10px;
+    border:none;
+    border-radius:10px;
+    background:linear-gradient(90deg,#2563eb,#1d4ed8);
+    color:white;
+    font-size:14px;
+    cursor:pointer;
+    margin-top:8px;
+    transition:0.2s;
+}
+
+.primary-btn:hover{
+    transform:translateY(-1px);
+    box-shadow:0 8px 20px rgba(37,99,235,0.4);
+}
+
+.link-text{
+    text-align:center;
+    margin-top:15px;
+    font-size:12px;
+}
+
+.link-text a{
+    color:#3b82f6;
+    text-decoration:none;
+}
+
+/* checkbox */
+input[type="checkbox"]{
+    accent-color:#3b82f6;
+    cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div class="auth-box">
+    <h2>สร้างบัญชีผู้ใช้</h2>
+    <p>Loan Management Platform</p>
+
+    <form id="registerForm">
+
+        <div class="input-group">
+            <label>ชื่อผู้ใช้</label>
+            <input type="text" id="username" required>
+        </div>
+
+        <div class="input-group">
+            <label>อีเมล</label>
+            <input type="email" id="email" required>
+        </div>
+
+        <div class="input-group">
+            <label>รหัสผ่าน</label>
+            <input type="password" id="password" required>
+        </div>
+
+        <div class="input-group">
+            <label>ยืนยันรหัสผ่าน</label>
+            <input type="password" id="confirmPassword" required>
+        </div>
+
+        <!-- 🔥 checkbox แสดงรหัส -->
+        <div style="margin-top:8px; display:flex; align-items:center; gap:6px; font-size:12px; opacity:0.8;">
+            <input type="checkbox" id="showPassword" onclick="toggleAllPasswords()">
+            <label for="showPassword">แสดงรหัสผ่าน</label>
+        </div>
+
+        <button type="submit" class="primary-btn">สมัครสมาชิก</button>
+
+    </form>
+
+    <div class="link-text">
+        มีบัญชีแล้ว? <a href="index.html">เข้าสู่ระบบ</a>
+    </div>
+</div>
+
+<script>
+function toggleAllPasswords(){
+    const pass = document.getElementById("password");
+    const confirm = document.getElementById("confirmPassword");
+    const checkbox = document.getElementById("showPassword");
+
+    if(checkbox.checked){
+        pass.type = "text";
+        confirm.type = "text";
+    }else{
+        pass.type = "password";
+        confirm.type = "password";
+    }
+}
+
+/* (ถ้าคุณมีระบบ register API อยู่แล้ว ใช้อันเดิมได้เลย) */
+document.getElementById("registerForm").addEventListener("submit", async function(e){
+    e.preventDefault();
+
+    const username = document.getElementById("username").value;
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    const confirm = document.getElementById("confirmPassword").value;
+
+    if(password !== confirm){
+        alert("รหัสผ่านไม่ตรงกัน");
+        return;
+    }
+
+    const res = await fetch("/api/register",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({username,email,password})
+    });
+
+    const data = await res.json();
+
+    if(data.success){
+        alert("สมัครสำเร็จ");
+        window.location.href = "index.html";
+    }else{
+        alert(data.message);
+    }
+});
+</script>
+
+</body>
+</html>

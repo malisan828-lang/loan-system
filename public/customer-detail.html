@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <!-- ชื่อแอป -->
+<meta name="apple-mobile-web-app-title" content="Loan System">
+
+<!-- เปิดแบบ fullscreen -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+<!-- สี status bar -->
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+<!-- ไอคอน -->
+<link rel="apple-touch-icon" href="assets/icons/logo.png">
+<link rel="manifest" href="manifest.json">
+<meta charset="UTF-8">
+<title>ข้อมูลลูกค้า</title>
+<link rel="icon" type="image/png" href="assets/icons/favicon.png">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+
+<body>
+
+<div id="navbar"></div>
+
+<div class="container">
+
+<h2>รายละเอียดลูกค้า</h2>
+
+<!-- ================= ข้อมูลลูกค้า ================= -->
+
+<h3>ข้อมูลลูกค้า</h3>
+
+<div class="summary-table-box">
+
+<table class="summary-table">
+
+<tr>
+<td>ชื่อลูกค้า</td>
+<td id="borrowerName"></td>
+</tr>
+
+<tr>
+<td>เบอร์โทร</td>
+<td id="borrowerPhone"></td>
+</tr>
+
+<tr>
+<td>อาชีพ</td>
+<td id="borrowerJob"></td>
+</tr>
+
+<tr>
+<td>ที่อยู่</td>
+<td id="borrowerAddress"></td>
+</tr>
+
+<tr>
+<td>แขวง / จังหวัด</td>
+<td id="borrowerProvince"></td>
+</tr>
+
+<tr>
+<td>เมือง / อำเภอ</td>
+<td id="borrowerDistrict"></td>
+</tr>
+
+<tr>
+<td>บ้าน</td>
+<td id="borrowerVillage"></td>
+</tr>
+
+<tr>
+<td>ไปรษณีย์</td>
+<td id="borrowerZip"></td>
+</tr>
+
+</table>
+
+</div>
+
+<br>
+
+<!-- ================= ผู้ค้ำ ================= -->
+
+<h3>ข้อมูลผู้ค้ำ</h3>
+
+<div class="summary-table-box">
+
+<table class="summary-table">
+
+<tr>
+<td>ชื่อผู้ค้ำ</td>
+<td id="guarantorName"></td>
+</tr>
+
+<tr>
+<td>เบอร์โทร</td>
+<td id="guarantorPhone"></td>
+</tr>
+
+<tr>
+<td>ที่อยู่</td>
+<td id="guarantorAddress"></td>
+</tr>
+
+<tr>
+<td>แขวง</td>
+<td id="guarantorProvince"></td>
+</tr>
+
+<tr>
+<td>เมือง</td>
+<td id="guarantorDistrict"></td>
+</tr>
+
+<tr>
+<td>บ้าน</td>
+<td id="guarantorVillage"></td>
+</tr>
+
+<tr>
+<td>ไปรษณีย์</td>
+<td id="guarantorZip"></td>
+</tr>
+
+</table>
+
+</div>
+
+<br>
+
+<!-- ================= ข้อมูลสัญญา ================= -->
+
+<h3>ข้อมูลสัญญา</h3>
+
+<div class="summary-table-box">
+
+<table class="summary-table">
+
+<tr>
+<td>ยอดกู้</td>
+<td id="loanAmount"></td>
+</tr>
+
+<tr>
+<td>จำนวนวัน</td>
+<td id="loanDays"></td>
+</tr>
+
+<tr>
+<td>ดอกเบี้ยรวม</td>
+<td id="interest"></td>
+</tr>
+
+<tr>
+<td>หนี้รวม</td>
+<td id="totalDebt"></td>
+</tr>
+
+<tr>
+<td>จ่ายต่อวัน</td>
+<td id="installment"></td>
+</tr>
+
+<tr>
+<td>คงเหลือ</td>
+<td id="remainingAmount"></td>
+</tr>
+
+<tr>
+<td>จำนวนวันที่จ่ายแล้ว</td>
+<td id="paidDays"></td>
+</tr>
+
+<tr>
+<td>ดอกค้างสะสม</td>
+<td id="overdueInterest"></td>
+</tr>
+
+</table>
+
+</div>
+
+<br>
+
+<!-- ================= ประวัติการจ่าย ================= -->
+
+<h3>ประวัติการจ่าย / ค้าง</h3>
+
+<div class="table-scroll">
+
+<table class="dashboard-table">
+
+<thead>
+<tr>
+<th>วันที่</th>
+<th>ประเภท</th>
+<th>จำนวนเงิน</th>
+</tr>
+</thead>
+
+<tbody id="paymentHistory"></tbody>
+
+</table>
+
+</div>
+
+<br>
+
+<button class="primary-btn" id="topupBtn">
+กู้เพิ่ม
+</button>
+
+</div>
+
+<script src="/js/app.js"></script>
+
+<script>
+
+const token = localStorage.getItem("token");
+
+function format(num){
+return Number(num || 0).toLocaleString();
+}
+
+const params = new URLSearchParams(window.location.search);
+const loanId = params.get("id");
+
+async function loadCustomer(){
+
+const res = await fetch("/api/customers",{
+headers:{ "Authorization":"Bearer "+token }
+});
+
+const result = await res.json();
+const loans = result.customers;
+
+const loan = loans.find(l => l._id === loanId);
+
+if(!loan){
+alert("ไม่พบข้อมูล");
+return;
+}
+
+if(!loans){
+alert("โหลดข้อมูลไม่ได้");
+return;
+}
+/* ===== ลูกค้า ===== */
+
+borrowerName.innerText = loan.borrowerName || "-";
+borrowerPhone.innerText = loan.borrowerPhone || "-";
+borrowerJob.innerText = loan.borrowerJob || "-";
+borrowerAddress.innerText = loan.borrowerAddress || "-";
+borrowerProvince.innerText = loan.borrowerProvince || "-";
+borrowerDistrict.innerText = loan.borrowerDistrict || "-";
+borrowerVillage.innerText = loan.borrowerVillage || "-";
+borrowerZip.innerText = loan.borrowerZip || "-";
+
+/* ===== ผู้ค้ำ ===== */
+
+guarantorName.innerText = loan.guarantorName || "-";
+guarantorPhone.innerText = loan.guarantorPhone || "-";
+guarantorAddress.innerText = loan.guarantorAddress || "-";
+guarantorProvince.innerText = loan.guarantorProvince || "-";
+guarantorDistrict.innerText = loan.guarantorDistrict || "-";
+guarantorVillage.innerText = loan.guarantorVillage || "-";
+guarantorZip.innerText = loan.guarantorZip || "-";
+
+/* ===== สัญญา ===== */
+
+loanAmount.innerText = format(loan.loanAmount);
+loanDays.innerText = loan.loanDays || "-";
+interest.innerText = format(loan.interest);
+totalDebt.innerText = format(loan.totalDebt);
+remainingAmount.innerText = format(loan.remainingAmount);
+installment.innerText = format(loan.installment);
+paidDays.innerText = loan.paidDays || 0;
+overdueInterest.innerText = format(loan.overdueInterest);
+
+/* ===== ประวัติการจ่าย ===== */
+
+const tbody = document.getElementById("paymentHistory");
+tbody.innerHTML = "";
+
+(loan.paymentHistory || []).forEach(p=>{
+
+const row = document.createElement("tr");
+
+row.innerHTML = `
+<td>${new Date(p.date).toLocaleDateString()}</td>
+<td>${p.type === "paid" ? "จ่าย" : "ค้าง"}</td>
+<td>${format(p.amount)}</td>
+`;
+
+tbody.appendChild(row);
+
+});
+
+/* ===== ปุ่มกู้เพิ่ม ===== */
+
+document.getElementById("topupBtn").onclick = ()=>{
+
+window.location.href = "reloan.html?id="+loan._id;
+
+};
+
+}
+
+loadCustomer();
+
+</script>
+
+</body>
+</html>

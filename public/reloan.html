@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <!-- ชื่อแอป -->
+<meta name="apple-mobile-web-app-title" content="Loan System">
+
+<!-- เปิดแบบ fullscreen -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+<!-- สี status bar -->
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+<!-- ไอคอน -->
+<link rel="apple-touch-icon" href="assets/icons/logo.png">
+<link rel="manifest" href="manifest.json">
+<meta charset="UTF-8">
+<title>กู้เพิ่ม (Re-loan)</title>
+<link rel="icon" type="image/png" href="assets/icons/favicon.png">
+<link rel="stylesheet" href="assets/css/style.css">
+
+<style>
+
+.form-box{
+max-width:750px;
+margin:auto;
+}
+
+.form-grid{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:20px;
+}
+
+.form-grid input{
+width:100%;
+padding:12px;
+border-radius:8px;
+border:1px solid #2f3a4d;
+background:#0f1724;
+color:white;
+font-size:15px;
+}
+
+.form-grid label{
+font-size:14px;
+margin-bottom:6px;
+display:block;
+color:#9ca3af;
+}
+
+.result-box{
+background:#0f1724;
+padding:20px;
+border-radius:10px;
+margin-top:20px;
+border:1px solid #2f3a4d;
+}
+
+.result-row{
+display:flex;
+justify-content:space-between;
+font-size:18px;
+}
+
+.result-row strong{
+color:#4ade80;
+font-size:22px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div id="navbar"></div>
+
+<div class="container">
+
+<h2 style="margin-bottom:20px;">กู้เพิ่ม</h2>
+
+<div class="form-box">
+
+<div class="form-grid">
+
+<div>
+<label>ยอดหนี้เดิม</label>
+<input type="text" id="oldDebt" readonly>
+</div>
+
+<div>
+<label>ยอดคงเหลือปัจจุบัน</label>
+<input type="text" id="remainingNow" readonly>
+</div>
+
+<div>
+<label>ยอดกู้ใหม่</label>
+<input type="number" id="loanAmount">
+</div>
+
+<div>
+<label>ดอกต่อวันใหม่</label>
+<input type="text" id="dailyInterest" readonly>
+</div>
+
+<div>
+<label>เงินที่ต้องหัก</label>
+<input type="text" id="deduction" readonly>
+</div>
+
+</div>
+
+<div class="result-box">
+
+<div class="result-row">
+<span>เงินรับสุทธิ</span>
+<strong id="receivedAmount">0</strong>
+</div>
+
+</div>
+
+<br>
+
+<button id="submitBtn" class="primary-btn" onclick="openConfirm()">
+ยืนยันกู้เพิ่ม
+</button>
+
+</div>
+
+</div>
+
+
+<!-- CONFIRM MODAL -->
+
+<div id="confirmModal" class="modal-overlay">
+
+<div class="modal-box dark">
+
+<h3>ยืนยันการกู้เพิ่ม</h3>
+
+<p>ยืนยันทำรายการ กู้เงินเพิ่ม ?</p>
+
+<div class="modal-buttons">
+
+<button class="btn cancel" onclick="closeConfirm()">
+ยกเลิก
+</button>
+
+<button class="btn success" onclick="confirmReloan()">
+ตกลง
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+
+<!-- SUCCESS MODAL -->
+
+<div id="successModal" class="modal-overlay">
+
+<div class="modal-box dark">
+
+<h3>ทำรายการสำเร็จ</h3>
+
+<p style="color:#9ca3af;">ลูกค้ารับเงิน</p>
+
+<h1 id="successAmount" style="color:#4ade80;font-size:42px"></h1>
+
+<br>
+
+<button class="btn success" onclick="window.location.href='customers.html'">
+กลับหน้าลูกค้า
+</button>
+
+</div>
+
+</div>
+
+
+<script src="/js/app.js"></script>
+
+<script>
+
+/* ================== TOKEN ================== */
+
+const token = localStorage.getItem("token");
+
+/* ================== GET LOAN ID ================== */
+
+const params = new URLSearchParams(window.location.search);
+const loanId = params.get("id");
+
+/* ================== VARIABLES ================== */
+
+let oldRemaining = 0;
+let oldTotalDebt = 0;
+let loanDays = 24;
+
+/* ================== FORMAT ================== */
+
+function format(num){
+return Number(num || 0).toLocaleString();
+}
+
+
+/* ================== LOAD LOAN ================== */
+
+async function loadLoan(){
+
+const res = await fetch(`/api/loan/${loanId}`,{
+headers:{ Authorization:"Bearer "+token }
+});
+
+const loan = await res.json();
+
+oldRemaining = loan.remainingAmount;
+oldTotalDebt = loan.totalDebt;
+loanDays = loan.loanDays;
+
+document.getElementById("oldDebt").value = format(oldTotalDebt);
+document.getElementById("remainingNow").value = format(oldRemaining);
+
+}
+
+
+/* ================== CALCULATE ================== */
+
+function calculate(){
+
+const newLoan =
+Number(document.getElementById("loanAmount").value) || 0;
+
+if(newLoan <= 0){
+return;
+}
+
+const interest = newLoan * 0.20;
+
+const totalDebt = newLoan + interest;
+
+const dailyInterest = totalDebt / loanDays;
+
+const advanceInterest = dailyInterest * 2;
+
+const deductionTotal =
+oldRemaining + advanceInterest;
+
+const received =
+(newLoan - oldRemaining) - advanceInterest;
+
+document.getElementById("dailyInterest").value =
+format(dailyInterest);
+
+document.getElementById("deduction").value =
+format(deductionTotal);
+
+document.getElementById("receivedAmount").innerText =
+format(received);
+
+}
+
+
+/* ================== EVENT ================== */
+
+document
+.getElementById("loanAmount")
+.addEventListener("input",calculate);
+
+
+/* ================== MODAL ================== */
+
+function openConfirm(){
+
+const amount =
+Number(document.getElementById("loanAmount").value);
+
+if(!amount){
+alert("กรอกยอดกู้ใหม่ก่อน");
+return;
+}
+
+document.getElementById("confirmModal").style.display="flex";
+
+}
+
+function closeConfirm(){
+document.getElementById("confirmModal").style.display="none";
+}
+
+
+/* ================== CONFIRM ================== */
+
+async function confirmReloan(){
+
+closeConfirm();
+
+const btn = document.getElementById("submitBtn");
+
+btn.innerText="กำลังทำรายการ...";
+btn.disabled=true;
+
+const amount =
+Number(document.getElementById("loanAmount").value);
+
+try{
+
+const res = await fetch(`/api/loans/${loanId}/reloan`,{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json",
+Authorization:"Bearer "+token
+},
+
+body:JSON.stringify({
+loanAmount: amount
+})
+
+});
+
+const result = await res.json();
+
+if(result.success){
+
+showSuccess(result.receivedAmount);
+
+}else{
+
+alert(result.message || "เกิดข้อผิดพลาด");
+
+}
+
+}catch(err){
+
+alert("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้");
+
+}
+
+btn.innerText="ยืนยันกู้เพิ่ม";
+btn.disabled=false;
+
+}
+
+
+/* ================== SUCCESS ================== */
+
+function showSuccess(amount){
+
+document.getElementById("successAmount").innerText =
+Number(amount).toLocaleString();
+
+document.getElementById("successModal").style.display="flex";
+
+}
+
+
+/* ================== START ================== */
+
+loadLoan();
+
+</script>
+
+</body>
+</html>

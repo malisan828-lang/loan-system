@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <!-- ชื่อแอป -->
+<meta name="apple-mobile-web-app-title" content="Loan System">
+
+<!-- เปิดแบบ fullscreen -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+<!-- สี status bar -->
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+<!-- ไอคอน -->
+<link rel="apple-touch-icon" href="assets/icons/logo.png">
+<link rel="manifest" href="manifest.json">
+<meta charset="UTF-8">
+<title>Dashboard</title>
+<link rel="icon" type="image/png" href="assets/icons/favicon.png">
+<link rel="stylesheet" href="/assets/css/style.css">
+
+<style>
+
+.card-grid{
+display:grid;
+grid-template-columns:repeat(4,1fr);
+gap:20px;
+margin-bottom:30px;
+}
+
+.card{
+background:#1f2a3a;
+padding:20px;
+border-radius:12px;
+}
+
+.card span{color:#aaa;font-size:13px;}
+.card strong{font-size:22px;}
+
+.table-box{
+overflow:auto;
+background:#1f2a3a;
+padding:10px;
+border-radius:10px;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+font-size:14px;
+}
+
+th{
+background:#e0bf02;
+padding:10px;
+text-align:center;
+color:#000;
+}
+
+td{
+padding:8px;
+text-align:center;
+border-bottom:1px solid rgba(255,255,255,0.08);
+}
+
+.daily{background:#8ecae6;}
+.monthly{background:#f6e58d;}
+
+.green{color:#2ecc71;font-weight:bold;}
+.red{color:#e74c3c;font-weight:bold;}
+
+
+th{
+background:#e0bf02;
+padding:10px;
+text-align:center;
+color:#000;
+font-weight:bold;
+}
+
+.daily{
+background:#8ecae6;
+}
+
+.monthly{
+background:#f6e58d;
+}
+
+td{
+padding:8px;
+text-align:center;
+border-bottom:1px solid rgba(255,255,255,0.08);
+}
+
+.green{color:#2ecc71;font-weight:bold;}
+.red{color:#e74c3c;font-weight:bold;}
+</style>
+
+</head>
+
+<body>
+
+<div id="navbar"></div>
+
+<div class="container">
+
+<h2>Finance Dashboard</h2>
+
+<!-- ===== CARD ===== -->
+
+<div class="card-grid">
+
+<div class="card">
+<span>เงินทุนทั้งหมด</span>
+<strong id="totalCapital">0</strong>
+</div>
+
+<div class="card">
+<span>ปล่อยวันนี้</span>
+<strong id="releasedToday">0</strong>
+</div>
+
+<div class="card">
+<span>เก็บวันนี้</span>
+<strong id="collectedToday">0</strong>
+</div>
+
+<div class="card">
+<span>กำไรวันนี้</span>
+<strong id="profitToday">0</strong>
+</div>
+
+</div>
+
+<!-- ===== TABLE ===== -->
+
+<h3>ตารางสรุปพนักงาน</h3>
+
+<div class="table-box">
+
+<table>
+
+<thead>
+
+<tr>
+<th rowspan="2">ชื่อสาย</th>
+<th rowspan="2">พนักงาน</th>
+
+<th colspan="4" class="daily">สรุปรายวัน</th>
+<th colspan="4" class="monthly">สรุปรายเดือน</th>
+
+<th rowspan="2">กำไรรวม</th>
+<th rowspan="2">รอดัดเสีย</th>
+<th rowspan="2">เสียไม่เกิน 4 เท่า</th>
+<th rowspan="2">ส่วนต่าง</th>
+<th rowspan="2">เกินเสีย 3 เดือน</th>
+<th rowspan="2">เสีย 3 เดือน</th>
+
+<th rowspan="2">เปิดใหม่</th>
+<th rowspan="2">ปัจจุบัน</th>
+<th rowspan="2">ไม่ผ่าน</th>
+<th rowspan="2">⭐</th>
+</tr>
+
+<tr>
+
+<th class="daily">ยอดเติม</th>
+<th class="daily">ยอดเก็บ</th>
+<th class="daily">%</th>
+<th class="daily">กำไร</th>
+
+<th class="monthly">ยอดเติม</th>
+<th class="monthly">ยอดเก็บ</th>
+<th class="monthly">%</th>
+<th class="monthly">กำไร</th>
+
+</tr>
+
+</thead>
+
+<tbody id="tableBody"></tbody>
+
+</table>
+
+</div>
+
+</div>
+
+<script src="/js/app.js"></script>
+
+<script>
+
+const token = localStorage.getItem("token");
+
+if(!token){
+    window.location.href = "/index.html";
+}
+
+function format(n){
+    return Number(n || 0).toLocaleString();
+}
+
+async function load(){
+
+    const res = await fetch("/api/dashboard/summary",{
+        headers:{ Authorization:"Bearer " + token }
+    });
+
+    const data = await res.json();
+
+    // ===== CARD =====
+    document.getElementById("totalCapital").innerText = format(data.totalCapital);
+    document.getElementById("releasedToday").innerText = format(data.releasedToday);
+    document.getElementById("collectedToday").innerText = format(data.collectedToday);
+    document.getElementById("profitToday").innerText = format(data.profitToday);
+
+    const tbody = document.getElementById("tableBody");
+    tbody.innerHTML = "";
+
+    data.ranking.forEach(u => {
+
+        // ✅ ใช้ object ตรง ๆ ไม่ต้อง split แล้ว
+        const members = u.members || [];
+
+        const membersHTML = members.map(m=>`
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+
+                <span>${m.name}</span>
+
+                <img 
+                    src="/assets/icons/image-icon.png"
+                    style="
+                        width:14px;
+                        height:14px;
+                        cursor:pointer;
+                        opacity:0.7;
+                    "
+                    onclick="previewImage('${m.image}')"
+                >
+
+            </div>
+        `).join("");
+
+        tbody.innerHTML += `
+        <tr>
+
+            <td><strong>${u.name}</strong></td>
+
+            <td style="text-align:left;font-size:12px">
+                ${membersHTML}
+            </td>
+
+            <td>${format(u.dailyRelease)}</td>
+            <td>${format(u.dailyCollect)}</td>
+            <td>${u.dailyPercent.toFixed(2)}%</td>
+            <td class="${u.dailyProfit>=0?'green':'red'}">${format(u.dailyProfit)}</td>
+
+            <td>${format(u.monthlyRelease)}</td>
+            <td>${format(u.monthlyCollect)}</td>
+            <td>${u.monthlyPercent.toFixed(2)}%</td>
+            <td class="${u.monthlyProfit>=0?'green':'red'}">${format(u.monthlyProfit)}</td>
+
+            <td class="${u.totalProfit>=0?'green':'red'}">${format(u.totalProfit)}</td>
+
+            <td>${format(u.safeDebt)}</td>
+            <td>${format(u.risk4x)}</td>
+            <td>${format(u.diff)}</td>
+            <td>${format(u.over3month)}</td>
+            <td>${format(u.loss3month)}</td>
+
+            <td>${u.newToday}</td>
+            <td>${u.active}</td>
+            <td>${u.fail}</td>
+            <td>${u.star}</td>
+
+        </tr>
+        `;
+    });
+
+}
+
+// ===== Modal =====
+function previewImage(src){
+    if(!src) return;
+
+    document.getElementById("modalImg").src = src;
+    document.getElementById("imageModal").style.display = "flex";
+}
+
+function closeModal(){
+    document.getElementById("imageModal").style.display = "none";
+}
+
+document.addEventListener("keydown", e=>{
+    if(e.key === "Escape"){
+        closeModal();
+    }
+});
+
+load();
+
+setInterval(() => {
+    loadCustomers();
+}, 3000);
+</script>
+
+<div id="imageModal" onclick="closeModal()" style="
+    display:none;
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,0.85);
+    justify-content:center;
+    align-items:center;
+    z-index:9999;
+">
+    <img id="modalImg" style="max-width:80%;max-height:80%;border-radius:10px;">
+</div>
+</body>
+</html>

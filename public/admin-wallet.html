@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<!-- ชื่อแอป -->
+<meta name="apple-mobile-web-app-title" content="Loan System">
+
+<!-- เปิดแบบ fullscreen -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+<!-- สี status bar -->
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+<!-- ไอคอน -->
+<link rel="apple-touch-icon" href="assets/icons/logo.png">
+<link rel="manifest" href="manifest.json">
+<meta charset="UTF-8">
+<title>Wallet พนักงาน</title>
+<link rel="icon" type="image/png" href="assets/icons/favicon.png">
+<link rel="stylesheet" href="assets/css/style.css">
+
+<style>
+
+.wallet-page{
+max-width:1200px;
+margin:auto;
+}
+
+.wallet-summary{
+background:#1f2a3a;
+padding:20px;
+border-radius:10px;
+margin-bottom:20px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
+.wallet-summary span{
+font-size:14px;
+color:#aaa;
+}
+
+.wallet-summary strong{
+font-size:22px;
+color:#fff;
+}
+
+.wallet-table{
+width:100%;
+border-collapse:collapse;
+}
+
+.wallet-table th{
+background:#e0bf02;
+padding:12px;
+text-align:left;
+}
+
+.wallet-table td{
+padding:12px;
+border-bottom:1px solid rgba(255,255,255,0.08);
+}
+
+.wallet-table tr:hover{
+background:rgba(255,255,255,0.03);
+}
+
+.table-wrapper{
+overflow-x:auto;
+}
+
+.topup-box{
+display:flex;
+gap:8px;
+align-items:center;
+}
+
+.topup-box input{
+flex:1;
+padding:8px;
+border-radius:6px;
+border:none;
+background:#0f1723;
+color:white;
+}
+
+.topup-box button{
+padding:8px 14px;
+border:none;
+border-radius:6px;
+background:#2ecc71;
+color:white;
+cursor:pointer;
+}
+
+.topup-box button:hover{
+background:#27ae60;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div id="navbar"></div>
+
+<div class="container wallet-page">
+
+<div class="wallet-summary">
+
+<div>
+<span>เงินพนักงานทั้งหมด</span><br>
+<strong id="totalWallet">0</strong>
+</div>
+
+</div>
+
+<h2 style="margin-bottom:20px;">Wallet พนักงาน</h2>
+
+<div class="table-wrapper">
+
+<table class="wallet-table">
+
+<thead>
+<tr>
+<th>พนักงาน</th>
+<th>อีเมล</th>
+<th>เงินคงเหลือ</th>
+<th>ปล่อยทั้งหมด</th>
+<th>เก็บทั้งหมด</th>
+<th style="width:260px;">เติมเงิน</th>
+</tr>
+</thead>
+
+<tbody id="walletBody"></tbody>
+
+</table>
+
+</div>
+
+</div>
+
+<script src="/js/app.js"></script>
+
+<script>
+
+const token = localStorage.getItem("token");
+
+/* ตรวจว่ามี token หรือไม่ */
+if(!token){
+alert("กรุณาเข้าสู่ระบบก่อน");
+window.location.href = "index.html";
+}
+
+/* decode JWT เพื่อตรวจ role */
+const payload = JSON.parse(atob(token.split('.')[1]));
+
+/* ถ้าไม่ใช่ admin ให้เด้งออก */
+if(payload.role !== "admin"){
+alert("หน้านี้สำหรับ Admin เท่านั้น");
+window.location.href = "dashboard.html";
+}
+
+function format(num){
+return Number(num||0).toLocaleString();
+}
+
+async function loadWallets(){
+
+try{
+
+const res = await fetch("/api/admin/wallets",{
+headers:{
+Authorization:"Bearer "+token
+}
+});
+
+if(!res.ok){
+alert("โหลดข้อมูล wallet ไม่ได้");
+return;
+}
+
+const data = await res.json();
+
+const tbody = document.getElementById("walletBody");
+tbody.innerHTML="";
+
+let total = 0;
+
+data.forEach(w=>{
+
+total += w.balance || 0;
+
+const row = `
+<tr>
+
+<td>${w.employeeId?.username || "-"}</td>
+
+<td>${w.employeeId?.email || "-"}</td>
+
+<td>${format(w.balance)}</td>
+
+<td>${format(w.totalReleased)}</td>
+
+<td>${format(w.totalCollected)}</td>
+
+<td>
+
+<div class="topup-box">
+
+<input type="number"
+id="topup_${w.employeeId._id}"
+placeholder="จำนวนเงิน">
+
+<button onclick="topup('${w.employeeId._id}')">
+เติมเงิน
+</button>
+
+</div>
+
+</td>
+
+</tr>
+`;
+
+tbody.innerHTML += row;
+
+});
+
+document.getElementById("totalWallet").innerText = format(total);
+
+}catch(err){
+
+console.error(err);
+alert("เกิด error ในระบบ wallet");
+
+}
+
+}
+
+async function topup(employeeId){
+
+const amount = Number(document.getElementById("topup_"+employeeId).value);
+
+if(!amount) return alert("กรอกจำนวนเงิน");
+
+if(!confirm("ยืนยันเติมเงิน "+format(amount)+" ?")) return;
+
+await fetch("/api/admin/topup",{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json",
+Authorization:"Bearer "+token
+},
+
+body:JSON.stringify({
+employeeId,
+amount
+})
+
+});
+
+alert("เติมเงินสำเร็จ");
+
+loadWallets();
+
+}
+
+loadWallets();
+
+</script>
+
+</body>
+</html>

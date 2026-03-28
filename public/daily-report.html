@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <!-- ชื่อแอป -->
+<meta name="apple-mobile-web-app-title" content="Loan System">
+
+<!-- เปิดแบบ fullscreen -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+<!-- สี status bar -->
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+<!-- ไอคอน -->
+<link rel="apple-touch-icon" href="assets/icons/logo.png">
+<link rel="manifest" href="manifest.json">
+<meta charset="UTF-8">
+<title>ขอเบิกเงิน</title>
+<link rel="icon" type="image/png" href="assets/icons/favicon.png">
+<link rel="stylesheet" href="/assets/css/style.css">
+
+<style>
+
+.page-container{
+display:flex;
+justify-content:center;
+align-items:center;
+min-height:80vh;
+}
+
+.card-box{
+width:420px;
+max-width:90%;
+}
+
+.modal-overlay{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.65);
+display:flex;
+align-items:center;
+justify-content:center;
+z-index:9999;
+visibility:hidden;
+opacity:0;
+transition:0.2s;
+}
+
+.modal-overlay.active{
+visibility:visible;
+opacity:1;
+}
+
+.modal-box{
+background:#1f2a3a;
+padding:25px;
+border-radius:12px;
+width:320px;
+text-align:center;
+box-shadow:0 10px 30px rgba(0,0,0,0.5);
+}
+
+.modal-box h3{
+margin-bottom:10px;
+color:white;
+}
+
+.modal-box p{
+color:#ccc;
+margin-bottom:20px;
+}
+
+.modal-buttons{
+display:flex;
+justify-content:center;
+gap:10px;
+}
+
+.modal-buttons button{
+padding:8px 18px;
+border:none;
+border-radius:6px;
+cursor:pointer;
+}
+
+.success-box{
+border-top:4px solid #2ecc71;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div id="navbar"></div>
+
+<div class="page-container">
+
+<div>
+
+<h2 class="page-title">ส่งบิลขอเบิกเงิน</h2>
+
+<div class="card-box">
+
+<div class="form-group">
+<label>ยอดเงินที่ต้องการเบิก</label>
+<input type="number" id="amount" placeholder="กรอกจำนวนเงิน">
+</div>
+
+<div class="form-group">
+<label>เลขบัญชี</label>
+<input type="text" id="account" placeholder="เลขบัญชีรับเงิน">
+</div>
+
+<div class="form-group">
+<label>คำอธิบาย</label>
+<textarea id="note" placeholder="รายละเอียดเพิ่มเติม"></textarea>
+</div>
+
+<div class="form-group">
+<label>แนบ QR / บัญชี</label>
+<input type="file" id="slip">
+</div>
+
+<div class="button-row">
+<button id="submitBtn" onclick="prepareSubmit()" class="btn success">
+ส่งคำขอเบิกเงิน
+</button>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<script src="/js/app.js"></script>
+
+<script>
+
+const token = localStorage.getItem("token");
+
+if(!token){
+alert("กรุณาเข้าสู่ระบบก่อน");
+window.location.href="index.html";
+}
+
+let formDataCache=null;
+
+/* เตรียมข้อมูลก่อน confirm */
+
+function prepareSubmit(){
+
+const amount = document.getElementById("amount").value;
+const account = document.getElementById("account").value;
+const note = document.getElementById("note").value;
+const slip = document.getElementById("slip").files[0];
+
+if(!amount){
+alert("กรุณากรอกยอดเงิน");
+return;
+}
+
+if(!account){
+alert("กรุณากรอกเลขบัญชี");
+return;
+}
+
+if(!slip){
+alert("กรุณาแนบ QR หรือบัญชี");
+return;
+}
+
+formDataCache = new FormData();
+formDataCache.append("amount",amount);
+formDataCache.append("account",account);
+formDataCache.append("note",note);
+formDataCache.append("slip",slip);
+
+document.getElementById("confirmModal").classList.add("active");
+
+}
+
+/* ยกเลิก */
+
+function closeConfirm(){
+document.getElementById("confirmModal").classList.remove("active");
+}
+
+/* ตกลงส่ง */
+
+async function confirmSubmit(){
+
+closeConfirm();
+
+const btn = document.getElementById("submitBtn");
+btn.innerText="กำลังส่ง...";
+btn.disabled=true;
+
+try{
+
+const res = await fetch("/api/request-money",{
+method:"POST",
+headers:{
+Authorization:"Bearer "+token
+},
+body:formDataCache
+});
+
+const data = await res.json();
+
+if(data.success){
+
+document.getElementById("successModal").classList.add("active");
+
+document.getElementById("amount").value="";
+document.getElementById("account").value="";
+document.getElementById("note").value="";
+document.getElementById("slip").value="";
+
+}else{
+
+alert("ส่งข้อมูลไม่สำเร็จ");
+
+}
+
+}catch(err){
+
+alert("เกิดข้อผิดพลาดในระบบ");
+
+}
+
+btn.innerText="ส่งคำขอเบิกเงิน";
+btn.disabled=false;
+
+}
+
+/* ปิด success */
+
+function closeSuccess(){
+
+document.getElementById("successModal").classList.remove("active");
+
+}
+
+</script>
+
+<!-- Confirm Modal -->
+
+<div id="confirmModal" class="modal-overlay">
+
+<div class="modal-box">
+
+<h3>ยืนยันการทำรายการ</h3>
+
+<p>ยืนยันส่งคำขอเบิกเงิน ?</p>
+
+<div class="modal-buttons">
+
+<button class="btn cancel" onclick="closeConfirm()">ยกเลิก</button>
+
+<button class="btn success" onclick="confirmSubmit()">ตกลง</button>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- Success Modal -->
+
+<div id="successModal" class="modal-overlay">
+
+<div class="modal-box success-box">
+
+<h3>สำเร็จ</h3>
+
+<p>ส่งคำขอเบิกเงินสำเร็จ</p>
+
+<button class="btn success" onclick="closeSuccess()">ตกลง</button>
+
+</div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <!-- ชื่อแอป -->
+<meta name="apple-mobile-web-app-title" content="Loan System">
+
+<!-- เปิดแบบ fullscreen -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+<!-- สี status bar -->
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+<!-- ไอคอน -->
+<link rel="apple-touch-icon" href="assets/icons/logo.png">
+<link rel="manifest" href="manifest.json">
+<meta charset="UTF-8">
+<title>เปิดสัญญาใหม่</title>
+<link rel="icon" type="image/png" href="assets/icons/favicon.png">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+<div id="navbar"></div>
+
+<div class="container">
+
+<h2>เปิดสัญญาใหม่</h2>
+
+<form id="loanForm">
+
+<!-- ================= เปิดใหม่ ================= -->
+<h3>ข้อมูลสัญญา</h3>
+
+<div class="form-grid">
+
+<div>
+<label>ลูกค้าของ (พนักงานผู้ดูแล)</label>
+<select id="employeeLine">
+<option value="">เลือกพนักงาน</option>
+<option value="สาย A - สมชาย">สาย A - สมชาย</option>
+<option value="สาย B - วิภา">สาย B - วิภา</option>
+<option value="สาย C - ธนา">สาย C - ธนา</option>
+</select>
+</div>
+
+<div>
+<label>มีคนค้ำ</label>
+<select id="hasGuarantor">
+<option value="no">ไม่มี</option>
+<option value="yes">มีคนค้ำ</option>
+</select>
+</div>
+
+<div>
+<label>แหล่งที่มาของลูกค้า</label>
+<input type="text" id="source" placeholder="เช่น Facebook / แนะนำ / เดินเข้ามา">
+</div>
+
+</div>
+
+<hr>
+
+<!-- ================= ข้อมูลผู้กู้ ================= -->
+<h3>ข้อมูลผู้กู้</h3>
+
+<div class="form-grid">
+
+<input type="text" id="borrowerName" placeholder="ชื่อ - สกุล">
+<input type="text" id="borrowerPhone" placeholder="เบอร์โทร">
+<input type="text" id="borrowerJob" placeholder="อาชีพ">
+<input type="text" id="borrowerAddress" placeholder="ที่อยู่">
+<input type="text" id="borrowerProvince" placeholder="แขวง / จังหวัด">
+<input type="text" id="borrowerDistrict" placeholder="เมือง / อำเภอ">
+<input type="text" id="borrowerVillage" placeholder="เขต / บ้าน">
+<input type="text" id="borrowerZip" placeholder="ไปรษณีย์">
+<input type="text" id="borrowerPlace" placeholder="สถานที่">
+<input type="text" id="borrowerLocation" placeholder="ตำแหน่ง Location">
+
+</div>
+
+<hr>
+
+<!-- ================= ข้อมูลผู้ค้ำ ================= -->
+<div id="guarantorSection" style="display:none;">
+
+<h3>ข้อมูลผู้ค้ำ</h3>
+
+<div class="form-grid">
+
+<input type="text" id="guarantorId" placeholder="เลขบัตรประชาชน">
+<input type="text" id="guarantorName" placeholder="ชื่อ - สกุล">
+<input type="text" id="guarantorPhone" placeholder="เบอร์โทร">
+<input type="text" id="guarantorJob" placeholder="อาชีพ">
+<input type="text" id="guarantorAddress" placeholder="ที่อยู่">
+<input type="text" id="guarantorProvince" placeholder="แขวง / จังหวัด">
+<input type="text" id="guarantorDistrict" placeholder="เมือง / อำเภอ">
+<input type="text" id="guarantorVillage" placeholder="เขต / บ้าน">
+<input type="text" id="guarantorZip" placeholder="ไปรษณีย์">
+<input type="text" id="guarantorLocation" placeholder="Location สถานที่">
+
+</div>
+
+<hr>
+</div>
+
+<!-- ================= ข้อมูลยอดกู้ ================= -->
+<h3>ข้อมูลการกู้เงิน</h3>
+
+<div class="form-grid">
+
+<div>
+<label>จำนวนวัน</label>
+<select id="loanDays">
+<option value="24">24 วัน</option>
+<option value="30">30 วัน</option>
+</select>
+</div>
+
+<div>
+<label>เงินที่กู้</label>
+<input type="number" id="loanAmount">
+</div>
+
+<div>
+<label>ดอกเบี้ยรวม (20%)</label>
+<input type="text" id="totalInterest" readonly>
+</div>
+
+<div>
+<label>ดอกเบี้ยต่อวัน</label>
+<input type="text" id="dailyRate" value="5%" readonly>
+</div>
+
+<div>
+<label>ชำระต่องวด (รายวัน)</label>
+<input type="text" id="dailyPayment" readonly>
+</div>
+
+<div>
+<label>ยอดหนี้รวม</label>
+<input type="text" id="totalDebt" readonly>
+</div>
+
+<div>
+<label>ยอดลูกค้ารับสุทธิ</label>
+<input type="text" id="netReceive" readonly>
+</div>
+
+</div>
+
+<br>
+
+<button type="button" id="submitBtn" class="primary-btn" onclick="openConfirm()">บันทึกข้อมูล</button>
+
+</form>
+
+</div>
+
+<script src="/js/app.js"></script>
+
+<script>
+
+/* ===== แสดง/ซ่อน ผู้ค้ำ ===== */
+document.getElementById("hasGuarantor").addEventListener("change", function(){
+  const section = document.getElementById("guarantorSection");
+  section.style.display = this.value === "yes" ? "block" : "none";
+});
+
+/* ===== คำนวณยอดหนี้ ===== */
+const INTEREST_RATE = 0.20; // 20%
+const FEE_RATE = 0; // ถ้ามีค่าธรรมเนียม ใส่ % ตรงนี้ เช่น 0.05
+
+function formatNumber(num){
+  return num.toLocaleString("en-US");
+}
+
+function calculateLoan(){
+
+const amount = parseFloat(document.getElementById("loanAmount").value) || 0;
+const days = parseInt(document.getElementById("loanDays").value) || 0;
+
+if(amount <= 0 || days <= 0) return;
+
+// ดอกเบี้ยรวม 20%
+const totalInterest = amount * 0.20;
+
+// หนี้รวม
+const totalDebt = amount + totalInterest;
+
+// จ่ายต่อวัน
+const installment = totalDebt / days;
+
+// ค่าธรรมเนียม 5%
+const fee = amount * 0.05;
+
+// ดอกวันแรก
+const firstPayment = installment;
+
+// เงินที่หักตอนเปิดสัญญา
+const deduction = fee + firstPayment;
+
+// เงินที่ลูกค้าได้รับ
+const received = amount - deduction;
+
+
+// แสดงผล
+document.getElementById("totalInterest").value = totalInterest.toLocaleString();
+document.getElementById("dailyPayment").value = installment.toLocaleString();
+document.getElementById("totalDebt").value = totalDebt.toLocaleString();
+document.getElementById("netReceive").value = received.toLocaleString();
+
+}
+
+document.getElementById("loanAmount").addEventListener("input", calculateLoan);
+document.getElementById("loanDays").addEventListener("change", calculateLoan);
+
+
+/* ===== เปิด Confirm Modal ===== */
+
+function openConfirm(){
+document.getElementById("confirmModal").style.display = "flex";
+}
+
+function closeConfirm(){
+document.getElementById("confirmModal").style.display = "none";
+}
+
+
+/* ===== ยืนยันแล้วบันทึกจริง ===== */
+
+async function confirmSave(){
+
+  const btn = document.getElementById("submitBtn");
+btn.innerText = "กำลังบันทึก...";
+btn.disabled = true;
+
+document.getElementById("confirmModal").style.display = "none";
+
+const token = localStorage.getItem("token");
+const user = JSON.parse(localStorage.getItem("user"));
+
+const amount = Number(document.getElementById("loanAmount").value);
+const days = Number(document.getElementById("loanDays").value);
+
+if(!amount || !days){
+
+btn.innerText = "บันทึกข้อมูล";
+btn.disabled = false;
+
+alert("กรอกข้อมูลไม่ครบ");
+return;
+}
+
+
+// ================= สูตรคำนวณ =================
+
+// ดอก 20%
+const totalInterest = amount * 0.20;
+
+// หนี้รวม
+const totalDebt = amount + totalInterest;
+
+// จ่ายต่อวัน
+const installment = totalDebt / days;
+
+// ค่าธรรมเนียม 5%
+const fee = amount * 0.05;
+
+// หักวันแรก
+const firstPayment = installment;
+
+// หักตอนเปิดสัญญา
+const deduction = fee + firstPayment;
+
+// เงินที่ลูกค้าได้รับ
+const receivedAmount = amount - deduction;
+
+
+// ================= ส่งข้อมูล =================
+
+const data = {
+
+employee: user.username,
+employeeId: user.id,
+
+employeeLine: document.getElementById("employeeLine").value,
+source: document.getElementById("source").value,
+
+borrowerName: document.getElementById("borrowerName").value,
+borrowerPhone: document.getElementById("borrowerPhone").value,
+borrowerJob: document.getElementById("borrowerJob").value,
+borrowerAddress: document.getElementById("borrowerAddress").value,
+borrowerProvince: document.getElementById("borrowerProvince").value,
+borrowerDistrict: document.getElementById("borrowerDistrict").value,
+borrowerVillage: document.getElementById("borrowerVillage").value,
+borrowerZip: document.getElementById("borrowerZip").value,
+borrowerPlace: document.getElementById("borrowerPlace").value,
+borrowerLocation: document.getElementById("borrowerLocation").value,
+
+hasGuarantor: document.getElementById("hasGuarantor").value === "yes",
+
+guarantorId: document.getElementById("guarantorId")?.value,
+guarantorName: document.getElementById("guarantorName")?.value,
+guarantorPhone: document.getElementById("guarantorPhone")?.value,
+guarantorJob: document.getElementById("guarantorJob")?.value,
+guarantorAddress: document.getElementById("guarantorAddress")?.value,
+guarantorProvince: document.getElementById("guarantorProvince")?.value,
+guarantorDistrict: document.getElementById("guarantorDistrict")?.value,
+guarantorVillage: document.getElementById("guarantorVillage")?.value,
+guarantorZip: document.getElementById("guarantorZip")?.value,
+guarantorLocation: document.getElementById("guarantorLocation")?.value,
+
+loanDays: days,
+loanAmount: amount,
+
+interest: totalInterest,
+dailyInterest: installment,
+
+fee: fee,
+deduction: deduction,
+
+receivedAmount: receivedAmount,
+
+totalDebt: totalDebt,
+installment: installment,
+
+outstandingAmount: totalDebt
+
+};
+
+try{
+
+const response = await fetch("/api/loans",{
+method:"POST",
+headers:{
+"Content-Type":"application/json",
+"Authorization": "Bearer " + token
+},
+body: JSON.stringify(data)
+});
+
+const result = await response.json();
+
+if(result.success){
+
+  btn.innerText = "บันทึกข้อมูล";
+btn.disabled = false;
+
+document.getElementById("successModal").style.display = "flex";
+
+resetForm();
+
+}else{
+
+alert(result.message || "เกิดข้อผิดพลาด");
+
+}
+
+btn.innerText = "บันทึกข้อมูล";
+btn.disabled = false;
+
+}catch(err){
+
+console.error(err);
+
+btn.innerText = "บันทึกข้อมูล";
+btn.disabled = false;
+
+alert("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้");
+
+}
+
+}
+
+/* ===== รีเซ็ตฟอร์มแบบมืออาชีพ ===== */
+function resetForm(){
+
+  const form = document.getElementById("loanForm");
+  form.reset();
+
+  // ซ่อนผู้ค้ำ
+  document.getElementById("guarantorSection").style.display = "none";
+
+  // ล้างยอดหนี้
+  document.getElementById("totalDebt").value = "";
+
+  // เลื่อนกลับบนสุด
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+/* ===== ปิด Success Modal ===== */
+function closeModal(){
+  document.getElementById("successModal").style.display = "none";
+}
+
+</script>
+
+
+<!-- SUCCESS MODAL -->
+<div id="successModal" class="modal-overlay">
+  <div class="modal-box success-box dark">
+    <h3>บันทึกข้อมูลสำเร็จ</h3>
+    <p>ข้อมูลสัญญาถูกบันทึกเรียบร้อยแล้ว</p>
+    <button class="btn success" onclick="closeModal()">ตกลง</button>
+  </div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div id="confirmModal" class="modal-overlay">
+
+<div class="modal-box dark">
+
+<h3>ยืนยันการทำรายการ</h3>
+
+<p>ยืนยันบันทึกข้อมูลสัญญาใหม่ ?</p>
+
+<div class="modal-buttons">
+
+<button class="btn cancel" onclick="closeConfirm()">ยกเลิก</button>
+
+<button class="btn success" onclick="confirmSave()">ตกลง</button>
+
+</div>
+
+</div>
+
+</div>
+</body>
+</html>

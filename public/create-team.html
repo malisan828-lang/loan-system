@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <!-- ชื่อแอป -->
+<meta name="apple-mobile-web-app-title" content="Loan System">
+
+<!-- เปิดแบบ fullscreen -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+<!-- สี status bar -->
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+<!-- ไอคอน -->
+<link rel="apple-touch-icon" href="assets/icons/logo.png">
+<link rel="manifest" href="manifest.json">
+<meta charset="UTF-8">
+<title>สร้างทีม</title>
+<link rel="icon" type="image/png" href="assets/icons/favicon.png">
+<link rel="stylesheet" href="/assets/css/style.css">
+
+<style>
+body{
+    background:#0f172a;
+    color:white;
+}
+
+.box{
+    max-width:400px;
+    margin:50px auto;
+    background:#1e293b;
+    padding:25px;
+    border-radius:12px;
+}
+
+h2{
+    text-align:center;
+    margin-bottom:15px;
+}
+
+.input-group{
+    margin-bottom:15px;
+}
+
+label{
+    font-size:13px;
+    opacity:0.7;
+}
+
+input, select{
+    width:100%;
+    padding:10px;
+    margin-top:5px;
+    border-radius:8px;
+    border:none;
+    background:#0f172a;
+    color:white;
+}
+
+button{
+    width:100%;
+    padding:10px;
+    border:none;
+    border-radius:10px;
+    background:#2563eb;
+    color:white;
+    cursor:pointer;
+    margin-top:10px;
+}
+</style>
+</head>
+
+<body>
+
+<!-- 🔥 navbar -->
+<div id="navbar"></div>
+
+<div class="box">
+
+<h2>สร้างสายทีม</h2>
+
+<div class="input-group">
+<label>ชื่อสาย</label>
+<input type="text" id="teamName" placeholder="เช่น สาย A">
+</div>
+
+<div class="input-group">
+<label>หัวสาย</label>
+<select id="leader"></select>
+</div>
+
+<div class="input-group">
+<label>ผู้ช่วย</label>
+<select id="assistant"></select>
+</div>
+
+<button onclick="createTeam()">สร้างทีม</button>
+
+</div>
+
+<script src="/js/app.js"></script>
+
+<script>
+
+// 🔥 กันไม่ใช่ admin
+const user = JSON.parse(localStorage.getItem("user"));
+if(!user || user.role !== "admin"){
+    window.location.href = "/dashboard.html";
+}
+
+const token = localStorage.getItem("token");
+
+// โหลดพนักงาน
+async function loadUsers(){
+
+    const res = await fetch("/api/users",{
+        headers:{ Authorization:"Bearer "+token }
+    });
+
+    const data = await res.json();
+
+    const leaderSelect = document.getElementById("leader");
+    const assistantSelect = document.getElementById("assistant");
+
+    leaderSelect.innerHTML = `<option value=""> เลือกหัวสาย </option>`;
+    assistantSelect.innerHTML = `<option value=""> เลือกผู้ช่วย </option>`;
+
+    data.users.forEach(u=>{
+        const option1 = new Option(u.username, u._id);
+        const option2 = new Option(u.username, u._id);
+
+        leaderSelect.add(option1);
+        assistantSelect.add(option2);
+    });
+}
+
+loadUsers();
+
+// สร้างทีม
+async function createTeam(){
+
+    const name = document.getElementById("teamName").value.trim();
+    const leader = document.getElementById("leader").value;
+    const assistant = document.getElementById("assistant").value;
+
+    if(!name || !leader || !assistant){
+        return alert("กรอกข้อมูลให้ครบ");
+    }
+
+    if(leader === assistant){
+        return alert("ห้ามเลือกคนเดียวกัน");
+    }
+
+    const res = await fetch("/api/teams",{
+        method:"POST",
+        headers:{
+            "Content-Type":"application/json",
+            Authorization:"Bearer "+token
+        },
+        body:JSON.stringify({ name, leader, assistant })
+    });
+
+    const data = await res.json();
+
+    if(data.success){
+        alert("สร้างทีมสำเร็จ");
+        window.location.href = "/admin-teams.html";
+    }else{
+        alert("เกิดข้อผิดพลาด");
+    }
+}
+
+</script>
+
+</body>
+</html>

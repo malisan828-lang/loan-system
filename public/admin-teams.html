@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <!-- ชื่อแอป -->
+<meta name="apple-mobile-web-app-title" content="Loan System">
+
+<!-- เปิดแบบ fullscreen -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+<!-- สี status bar -->
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+<!-- ไอคอน -->
+<link rel="apple-touch-icon" href="assets/icons/logo.png">
+
+<link rel="manifest" href="manifest.json">
+<meta charset="UTF-8">
+<title>จัดการทีม</title>
+<link rel="icon" type="image/png" href="assets/icons/favicon.png">
+<link rel="stylesheet" href="/assets/css/style.css">
+
+<style>
+
+body{
+    background:#0f172a;
+    color:white;
+    font-family:'Segoe UI',sans-serif;
+}
+
+/* container */
+.container{
+    max-width:1100px;
+    margin:auto;
+    padding:20px;
+}
+
+/* header */
+.header{
+    display:flex;
+    justify-content:flex-end;
+    margin-bottom:15px;
+}
+
+/* button */
+.btn{
+    padding:8px 10px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    font-size:13px;
+}
+
+.btn-primary{
+    background:#2563eb;
+    color:white;
+}
+
+.btn-danger{
+    background:#ef4444;
+    color:white;
+}
+
+/* table */
+.table-box{
+    background:#1f2a3a;
+    border-radius:10px;
+    overflow:hidden;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+th{
+    background:#e0bf02;
+    color:#000;
+    padding:10px;
+    font-size:13px;
+    text-align:center;
+}
+
+td{
+    padding:12px;
+    text-align:center;
+    border-bottom:1px solid rgba(255,255,255,0.08);
+}
+
+tr:hover{
+    background:rgba(255,255,255,0.03);
+}
+
+/* badge */
+.badge{
+    display:inline-block;
+    padding:3px 8px;
+    border-radius:6px;
+    font-size:11px;
+    margin-top:4px;
+}
+
+.leader{
+    background:#facc15;
+    color:#000;
+}
+
+.assistant{
+    background:#38bdf8;
+    color:#000;
+}
+
+/* avatar */
+.avatar{
+    width:32px;
+    height:32px;
+    border-radius:50%;
+    object-fit:cover;
+    margin-bottom:5px;
+    cursor:pointer;
+    border:2px solid rgba(255,255,255,0.2);
+}
+
+.file-input{
+    font-size:10px;
+    margin-top:4px;
+}
+
+</style>
+</head>
+
+<body>
+
+<div id="navbar"></div>
+
+<div class="container">
+
+<div class="header">
+    <button class="btn btn-primary" onclick="window.location.href='create-team.html'">
+        + สร้างทีม
+    </button>
+</div>
+
+<div class="table-box">
+
+<table>
+
+<thead>
+<tr>
+<th>ชื่อทีม</th>
+<th>หัวสาย</th>
+<th>ผู้ช่วย</th>
+<th>จัดการ</th>
+</tr>
+</thead>
+
+<tbody id="teamTable"></tbody>
+
+</table>
+
+</div>
+
+</div>
+
+<script src="/js/app.js"></script>
+
+<script>
+
+// 🔒 กันไม่ใช่ admin
+const user = JSON.parse(localStorage.getItem("user"));
+if(!user || user.role !== "admin"){
+    window.location.href = "/dashboard.html";
+}
+
+const token = localStorage.getItem("token");
+
+async function loadTeams(){
+
+    const res = await fetch("/api/teams",{
+        headers:{ Authorization:"Bearer "+token }
+    });
+
+    const data = await res.json();
+
+    const tbody = document.getElementById("teamTable");
+    tbody.innerHTML = "";
+
+    data.teams.forEach(t=>{
+
+        tbody.innerHTML += `
+        <tr>
+
+            <td>${t.name}</td>
+
+            <td>
+                <img src="${t.leader?.profileImage || 'https://ui-avatars.com/api/?name=' + t.leader?.username}" class="avatar"
+                     onclick="previewImage('${t.leader?.profileImage}')">
+
+                <div>${t.leader?.username || "-"}</div>
+                <span class="badge leader">หัวสาย</span>
+
+                <input type="file" class="file-input"
+                       onchange="uploadImage(event, '${t.leader?._id}')">
+            </td>
+
+            <td>
+                <img src="${t.assistant?.profileImage || 'https://ui-avatars.com/api/?name=' + t.assistant?.username}" class="avatar"
+                     onclick="previewImage('${t.assistant?.profileImage}')">
+
+                <div>${t.assistant?.username || "-"}</div>
+                <span class="badge assistant">ผู้ช่วย</span>
+
+                <input type="file" class="file-input"
+                       onchange="uploadImage(event, '${t.assistant?._id}')">
+            </td>
+
+            <td>
+                <button class="btn btn-danger" onclick="deleteTeam('${t._id}')">
+                    ลบ
+                </button>
+            </td>
+
+        </tr>
+        `;
+    });
+}
+
+async function uploadImage(e, userId){
+
+    const file = e.target.files[0];
+    if(!file) return;
+
+    const formData = new FormData();
+    formData.append("image", file);
+    formData.append("userId", userId);
+
+    await fetch("http://localhost:5050/api/upload-profile",{
+        method:"POST",
+        body:formData
+    });
+
+    loadTeams();
+}
+
+async function deleteTeam(id){
+
+    if(!confirm("ต้องการลบทีมนี้ใช่หรือไม่?")) return;
+
+    await fetch("/api/teams/"+id,{
+        method:"DELETE",
+        headers:{ Authorization:"Bearer "+token }
+    });
+
+    loadTeams();
+}
+
+// 👁️ ดูรูป
+function previewImage(src){
+    if(!src) return;
+    window.open(src, "_blank");
+}
+
+loadTeams();
+
+</script>
+
+</body>
+</html>

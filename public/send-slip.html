@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <!-- ชื่อแอป -->
+<meta name="apple-mobile-web-app-title" content="Loan System">
+
+<!-- เปิดแบบ fullscreen -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+<!-- สี status bar -->
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+<!-- ไอคอน -->
+<link rel="apple-touch-icon" href="assets/icons/logo.png">
+<link rel="manifest" href="manifest.json">
+<meta charset="UTF-8">
+<title>ส่งสลิปโอนเงิน</title>
+<link rel="icon" type="image/png" href="assets/icons/favicon.png">
+<link rel="stylesheet" href="/assets/css/style.css">
+
+<style>
+
+.page-container{
+display:flex;
+justify-content:center;
+align-items:center;
+min-height:80vh;
+}
+
+.card-box{
+width:420px;
+max-width:90%;
+}
+
+.modal-overlay{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.65);
+display:flex;
+align-items:center;
+justify-content:center;
+z-index:9999;
+visibility:hidden;
+opacity:0;
+transition:0.2s;
+}
+
+.modal-overlay.active{
+visibility:visible;
+opacity:1;
+}
+
+.modal-box{
+background:#1f2a3a;
+padding:25px;
+border-radius:12px;
+width:320px;
+text-align:center;
+box-shadow:0 10px 30px rgba(0,0,0,0.5);
+}
+
+.modal-box h3{
+margin-bottom:10px;
+color:white;
+}
+
+.modal-box p{
+color:#ccc;
+margin-bottom:20px;
+}
+
+.modal-buttons{
+display:flex;
+justify-content:center;
+gap:10px;
+}
+
+.modal-buttons button{
+padding:8px 18px;
+border:none;
+border-radius:6px;
+cursor:pointer;
+}
+
+.success-box{
+border-top:4px solid #2ecc71;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div id="navbar"></div>
+
+<div class="page-container">
+
+<div>
+
+<h2 class="page-title">ส่งสลิปโอนเงิน</h2>
+
+<div class="card-box">
+
+<div class="form-group">
+<label>ยอดเงิน</label>
+<input type="number" id="amount" placeholder="กรอกยอดเงิน">
+</div>
+
+<div class="form-group">
+<label>คำอธิบาย</label>
+<textarea id="note" placeholder="รายละเอียดเพิ่มเติม"></textarea>
+</div>
+
+<div class="form-group">
+<label>แนบสลิป</label>
+<input type="file" id="slip">
+</div>
+
+<div class="button-row">
+<button id="submitBtn" class="btn whatsapp" onclick="prepareSubmit()">
+ส่ง LINE
+</button>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<script src="/js/app.js"></script>
+
+
+<script>
+
+const token = localStorage.getItem("token");
+
+// ✅ เช็คก่อนทุกอย่าง
+if(!token){
+alert("กรุณาเข้าสู่ระบบก่อน");
+window.location.href="index.html";
+}
+
+// ===============================
+// 💰 โหลด Wallet
+// ===============================
+
+let currentBalance = 0;
+
+async function loadWallet(){
+
+try{
+
+const res = await fetch("/api/wallet/me",{
+headers:{
+Authorization:"Bearer "+token
+}
+});
+
+const data = await res.json();
+
+currentBalance = data.balance || 0;
+
+// ใส่ค่าใน input
+document.getElementById("amount").value = currentBalance;
+
+}catch(err){
+console.log("โหลด wallet ไม่สำเร็จ");
+}
+
+}
+
+// เรียกตอนเปิดหน้า
+loadWallet();
+
+
+// ===============================
+// 📦 เตรียมข้อมูลก่อนส่ง
+// ===============================
+
+let formDataCache = null;
+
+function prepareSubmit(){
+
+const amount = Number(document.getElementById("amount").value);
+const note = document.getElementById("note").value;
+const slip = document.getElementById("slip").files[0];
+
+// ❌ ไม่มีจำนวนเงิน
+if(!amount || amount <= 0){
+alert("กรอกยอดเงิน");
+return;
+}
+
+// ❌ เงินเกิน
+if(amount > currentBalance){
+alert("ยอดเงินเกินใน Wallet");
+return;
+}
+
+// ✅ สร้าง formData หลังเช็ค
+formDataCache = new FormData();
+
+formDataCache.append("amount", amount);
+formDataCache.append("note", note);
+
+if(slip){
+formDataCache.append("slip", slip);
+}
+
+// เปิด modal
+document.getElementById("confirmModal").classList.add("active");
+
+}
+
+
+// ===============================
+// ❌ ปิด confirm
+// ===============================
+
+function closeConfirm(){
+document.getElementById("confirmModal").classList.remove("active");
+}
+
+
+// ===============================
+// 🚀 ส่งข้อมูลจริง
+// ===============================
+
+async function confirmSubmit(){
+
+closeConfirm();
+
+const btn = document.getElementById("submitBtn");
+btn.innerText = "กำลังส่ง...";
+btn.disabled = true;
+
+try{
+
+const res = await fetch("/api/send-slip",{
+method:"POST",
+headers:{
+Authorization:"Bearer "+token
+},
+body:formDataCache
+});
+
+const data = await res.json();
+
+if(data.success){
+
+// ✅ โหลด wallet ใหม่ (เงินถูกหักแล้ว)
+await loadWallet();
+
+// แสดง modal success
+document.getElementById("successModal").classList.add("active");
+
+// เคลียร์ฟอร์ม
+document.getElementById("note").value="";
+document.getElementById("slip").value="";
+
+}else{
+
+alert(data.message || "ส่งไม่สำเร็จ");
+
+}
+
+}catch(err){
+
+alert("เกิดข้อผิดพลาด");
+
+}
+
+btn.innerText="ส่ง LINE ";
+btn.disabled=false;
+
+}
+
+
+// ===============================
+// ✅ ปิด success
+// ===============================
+
+function closeSuccess(){
+document.getElementById("successModal").classList.remove("active");
+}
+
+</script>
+
+<!-- Confirm Modal -->
+
+<div id="confirmModal" class="modal-overlay">
+
+<div class="modal-box">
+
+<h3>ยืนยันการทำรายการ</h3>
+
+<p>ยืนยันส่งสลิปโอนเงิน ?</p>
+
+<div class="modal-buttons">
+
+<button class="btn cancel" onclick="closeConfirm()">ยกเลิก</button>
+
+<button class="btn success" onclick="confirmSubmit()">ตกลง</button>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- Success Modal -->
+
+<div id="successModal" class="modal-overlay">
+
+<div class="modal-box success-box">
+
+<h3>สำเร็จ</h3>
+
+<p>ส่งสลิปโอนเงินสำเร็จ</p>
+
+<button class="btn success" onclick="closeSuccess()">ตกลง</button>
+
+</div>
+
+</div>
+
+</body>
+</html>

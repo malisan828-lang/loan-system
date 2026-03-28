@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <!-- ชื่อแอป -->
+<meta name="apple-mobile-web-app-title" content="Loan System">
+
+<!-- เปิดแบบ fullscreen -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+<!-- สี status bar -->
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+<!-- ไอคอน -->
+<link rel="apple-touch-icon" href="assets/icons/logo.png">
+<link rel="manifest" href="manifest.json">
+<meta charset="UTF-8">
+<title>บริหารลูกค้ารายวัน</title>
+<link rel="icon" type="image/png" href="assets/icons/favicon.png">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+<div id="navbar"></div>
+
+<div class="container">
+
+<h2 style="margin-bottom:20px;">บริหารลูกค้ารายวัน</h2>
+
+<!-- ================= SUMMARY TABLE ================= -->
+
+<div class="summary-table-box">
+<table class="summary-table">
+<thead>
+<tr>
+<th>รายการ</th>
+<th>จำนวนเงิน (กีบ)</th>
+</tr>
+</thead>
+<tbody>
+<tr><td>จำนวนลูกค้า</td><td id="totalCustomers">0</td></tr>
+<tr><td>เงินของฉัน</td><td id="myMoney">0</td></tr>
+<tr><td>ยอดปล่อยรวม</td><td id="totalLoanAmount">0</td></tr>
+<tr><td>หนี้รวมทั้งหมด</td><td id="totalDebtAll">0</td></tr>
+<tr><td>คงเหลือรวม</td><td id="totalRemainingAll">0</td></tr>
+<tr><td>วันนี้ต้องเก็บ</td><td id="todayMustCollect">0</td></tr>
+<tr><td>วันนี้เก็บแล้ว</td><td class="green" id="todayCollected">0</td></tr>
+<tr><td>วันนี้ค้างเก็บ</td><td class="red" id="todayPending">0</td></tr>
+<tr><td>ดอกค้างสะสม</td><td id="totalOverdue">0</td></tr>
+<tr><td>วันนี้ปล่อยเงินใหม่</td><td id="todayReleased">0</td></tr>
+<tr><td>ค่าธรรมเนียมรวม (5%)</td><td id="totalFee">0</td></tr>
+</tbody>
+</table>
+</div>
+
+<br>
+
+<!-- ================= CUSTOMER TABLE ================= -->
+
+<div class="table-scroll">
+<table class="dashboard-table">
+<thead>
+<tr>
+<th>พนักงาน</th>
+<th>ลูกค้า</th>
+<th>เมือง</th>
+<th>ผู้ค้ำ</th>
+<th>ยอดกู้</th>
+<th>คงเหลือ</th>
+<th>ยอดเก็บต่อวัน</th>
+<th>จัดการ</th>
+</tr>
+</thead>
+<tbody id="customerBody"></tbody>
+</table>
+</div>
+
+</div>
+
+<!-- ================= GUARANTOR MODAL ================= -->
+
+<div id="guarantorModal" class="modal-overlay">
+<div class="modal-box">
+<h3>ข้อมูลผู้ค้ำ</h3>
+<div id="guarantorInfo"></div>
+<button class="primary-btn" onclick="closeGuarantor()">ปิด</button>
+</div>
+</div>
+
+<script src="/js/app.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+
+const token = localStorage.getItem("token");
+
+function format(num){
+    return Number(num || 0).toLocaleString();
+}
+
+async function loadCustomers(){
+
+    const res = await fetch("/api/customers",{
+        headers:{ "Authorization":"Bearer "+token }
+    });
+
+    const result = await res.json();
+    const data = result.customers;
+    const tbody = document.getElementById("customerBody");
+    tbody.innerHTML = "";
+
+    let totalLoanAmount=0,totalDebtAll=0,totalRemainingAll=0,totalOverdue=0;
+    let todayMustCollect=0,todayCollected=0,todayPending=0;
+    let totalFee=0;
+
+    const today = new Date().toDateString();
+
+    data.forEach(loan=>{
+
+    totalLoanAmount += loan.loanAmount || 0;
+    totalDebtAll += loan.totalDebt || 0;
+    totalRemainingAll += loan.remainingAmount || 0;
+    totalOverdue += loan.overdueInterest || 0;
+
+    
+    const loanDate = new Date(loan.createdAt).toDateString();
+
+if(loanDate === today){
+    totalFee += loan.fee || 0;
+}
+
+    if(loan.status === "active" && (loan.remainingAmount||0)>0){
+
+        todayMustCollect += loan.installment || 0;
+
+        const paymentsToday = loan.paymentHistory?.filter(p=>{
+            return new Date(p.date).toDateString() === today && p.type === "paid"
+        }) || [];
+
+        const paidAmountToday = paymentsToday.reduce((sum,p)=>sum+p.amount,0);
+
+        const sentToday = loan.paymentHistory?.filter(p=>{
+return new Date(p.date).toDateString() === today && p.type === "sent"
+}) || [];
+
+const sentAmount = sentToday.reduce((sum,p)=>sum+p.amount,0);
+
+todayCollected += (paidAmountToday - sentAmount);
+
+        let remainingToday = (loan.installment || 0) - paidAmountToday;
+
+if(remainingToday < 0){
+    remainingToday = 0;
+}
+
+     if(remainingToday > 0){
+     todayPending += remainingToday;
+      }
+
+        const row=document.createElement("tr");
+
+
+        row.innerHTML=`
+        <td>${loan.employeeName || loan.employee || "-"}</td>
+        <td>${loan.borrowerName || "-"}</td>
+        <td>${loan.borrowerDistrict || "-"}</td>
+
+        <td>
+        ${loan.hasGuarantor
+        ? `<button class="btn-success"
+        onclick='showGuarantor(${JSON.stringify(loan)})'>
+        ดู
+        </button>`
+        : "-"}
+        </td>
+
+        <td>${format(loan.loanAmount)}</td>
+        <td>${format(loan.remainingAmount)}</td>
+
+        <td>
+        <input type="number"
+class="daily-input"
+id="amount_${loan._id}"
+placeholder="${format(remainingToday || loan.installment || 0)}">
+        </td>
+
+        <td>
+
+        <button class="action-btn btn-pay"
+        onclick="payInstallment('${loan._id}')">
+        จ่าย
+        </button>
+
+        <button class="action-btn btn-overdue"
+        onclick="markOverdue('${loan._id}')">
+        ค้าง
+        </button>
+
+        <button class="action-btn btn-view"
+        onclick="window.location='customer-detail.html?id=${loan._id}'">
+        ดู
+        </button>
+
+        </td>
+        `;
+
+        
+
+        tbody.appendChild(row);
+    }
+
+});
+
+    document.getElementById("totalCustomers").innerText=data?.length || 0;
+    document.getElementById("totalLoanAmount").innerText=format(totalLoanAmount);
+    document.getElementById("totalDebtAll").innerText=format(totalDebtAll);
+    document.getElementById("totalRemainingAll").innerText=format(totalRemainingAll);
+    document.getElementById("todayMustCollect").innerText=format(todayMustCollect);
+    document.getElementById("todayCollected").innerText=format(todayCollected);
+    document.getElementById("todayPending").innerText=format(todayPending);
+    document.getElementById("todayReleased").innerText =format(result.releasedToday);
+    document.getElementById("totalOverdue").innerText=format(totalOverdue);
+    document.getElementById("totalFee").innerText=format(totalFee);
+}
+
+async function payInstallment(id){
+
+    const amount=Number(document.getElementById("amount_"+id).value);
+    if(!amount) return alert("กรอกยอดเงิน");
+
+    await fetch(`/api/loans/${id}/pay-installment`,{
+        method:"POST",
+        headers:{
+            "Content-Type":"application/json",
+            "Authorization":"Bearer "+token
+        },
+        body:JSON.stringify({amount})
+    });
+
+    loadCustomers();
+}
+
+async function markOverdue(id){
+
+    const amount=Number(document.getElementById("amount_"+id).value);
+    if(!amount) return alert("กรอกยอดเงิน");
+
+    await fetch(`/api/loans/${id}/overdue`,{
+        method:"POST",
+        headers:{
+            "Content-Type":"application/json",
+            "Authorization":"Bearer "+token
+        },
+        body:JSON.stringify({amount})
+    });
+
+    loadCustomers();
+}
+
+function showGuarantor(loan){
+
+    document.getElementById("guarantorInfo").innerHTML=`
+    <p><b>ชื่อ:</b> ${loan.guarantorName || "-"}</p>
+    <p><b>เบอร์:</b> ${loan.guarantorPhone || "-"}</p>
+    <p><b>ที่อยู่:</b> ${loan.guarantorAddress || "-"}</p>
+    <p><b>แขวง:</b> ${loan.guarantorProvince || "-"}</p>
+    <p><b>เมือง:</b> ${loan.guarantorDistrict || "-"}</p>
+    <p><b>บ้าน:</b> ${loan.guarantorVillage || "-"}</p>
+    <p><b>รหัสไปรษณีย์:</b> ${loan.guarantorZip || "-"}</p>
+    `;
+
+    document.getElementById("guarantorModal").style.display="flex";
+}
+
+function closeGuarantor(){
+    document.getElementById("guarantorModal").style.display="none";
+}
+
+loadCustomers();
+
+async function loadWallet(){
+
+const token = localStorage.getItem("token");
+
+const res = await fetch("/api/wallet/me",{
+headers:{
+Authorization:"Bearer "+token
+}
+});
+
+const data = await res.json();
+
+document.getElementById("myMoney").innerText =
+Number(data.balance || 0).toLocaleString();
+
+}
+
+loadWallet();
+
+const socket = io();
+
+const user = JSON.parse(localStorage.getItem("user"));
+if(user){
+    socket.emit("join", user.id);
+}
+
+let refreshTimeout;
+
+socket.on("customersUpdated", () => {
+    clearTimeout(refreshTimeout);
+    refreshTimeout = setTimeout(() => {
+        loadCustomers();
+        loadWallet(); // 👈 ตัวนี้คือสิ่งที่คุณต้องการ
+    }, 300);
+});
+</script>
+
+</body>
+</html>

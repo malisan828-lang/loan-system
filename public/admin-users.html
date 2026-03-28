@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <!-- ชื่อแอป -->
+<meta name="apple-mobile-web-app-title" content="Loan System">
+
+<!-- เปิดแบบ fullscreen -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+<!-- สี status bar -->
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+<!-- ไอคอน -->
+<link rel="apple-touch-icon" href="assets/icons/logo.png">
+<link rel="manifest" href="manifest.json">
+<meta charset="UTF-8">
+<title>จัดการผู้ใช้งาน | Admin</title>
+<link rel="icon" type="image/png" href="assets/icons/favicon.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+
+<body>
+
+<div id="navbar"></div>
+
+<div class="container">
+
+<h2>ผู้ใช้รอการอนุมัติ</h2>
+
+<div class="card">
+<table class="table" id="userTable">
+<thead>
+<tr>
+    <th>ชื่อผู้ใช้</th>
+    <th>อีเมล</th>
+    <th>วันที่สมัคร</th>
+    <th>จัดการ</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+</div>
+
+<div id="noData" class="no-data"></div>
+
+</div>
+
+<script src="/js/app.js"></script>
+
+<script>
+const token = localStorage.getItem("token");
+const userData = localStorage.getItem("user");
+
+if(!token || !userData){
+    alert("กรุณาเข้าสู่ระบบ");
+    window.location.href="index.html";
+}
+
+const user = JSON.parse(userData);
+
+if(user.role !== "admin"){
+    alert("หน้านี้สำหรับ Admin เท่านั้น");
+    window.location.href="dashboard.html";
+}
+
+/* โหลดผู้ใช้รออนุมัติ */
+async function loadPendingUsers(){
+    try{
+        const response = await fetch("/api/admin/pending-users", {
+    headers: {
+        "Authorization": token
+    }
+});
+
+        const data = await response.json();
+
+        const tbody = document.querySelector("#userTable tbody");
+        tbody.innerHTML = "";
+
+        if(!data.users || data.users.length === 0){
+            document.getElementById("noData").innerText = "ไม่มีผู้ใช้ที่รออนุมัติ";
+            return;
+        }
+
+        data.users.forEach(user=>{
+            const row = document.createElement("tr");
+
+            row.innerHTML = `
+                <td>${user.username}</td>
+                <td>${user.email}</td>
+                <td>${new Date(user.createdAt).toLocaleString()}</td>
+                <td>
+                    <button class="btn-success" onclick="approveUser('${user._id}')">
+                        อนุมัติ
+                    </button>
+                </td>
+            `;
+
+            tbody.appendChild(row);
+        });
+
+    }catch(error){
+        console.error(error);
+    }
+}
+
+/* อนุมัติผู้ใช้ */
+async function approveUser(id){
+    if(!confirm("ยืนยันการอนุมัติผู้ใช้นี้?")) return;
+
+    await fetch("/api/admin/approve-user/" + id,{
+    method:"POST",
+    headers:{
+        "Authorization": token
+    }
+});
+
+    loadPendingUsers();
+}
+
+loadPendingUsers();
+</script>
+
+</body>
+</html>
