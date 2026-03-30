@@ -1528,9 +1528,12 @@ app.post("/api/upload-profile", upload.single("image"), async (req, res) => {
 
 });
 
+app.get("/", (req, res) => {
+  res.send("SERVER WORKING OK");
+});
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
 
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log("🔥 SERVER STARTED ON PORT " + PORT);
 });
