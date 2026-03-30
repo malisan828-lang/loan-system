@@ -29,24 +29,19 @@ const LINE_TOKEN = "Fy89GDtriAetX2OkSBuRVHuoprGJambmc0t2gktm0SWA8eGw0ZgEzo3M0w+e
 const GROUP_ID = "C338efe9ae62bab61956ef8913fd2dddc";
 
 async function sendLineMessage(text) {
-    await axios.post(
-        "https://api.line.me/v2/bot/message/push",
-        {
-            to: GROUP_ID,
-            messages: [
-                {
-                    type: "text",
-                    text: text
-                }
-            ]
-        },
-        {
-            headers: {
-                Authorization: `Bearer ${LINE_TOKEN}`,
-                "Content-Type": "application/json"
-            }
-        }
-    );
+  axios.post(
+    "https://api.line.me/v2/bot/message/push",
+    {
+      to: GROUP_ID,
+      messages: [{ type: "text", text: text }]
+    },
+    {
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + LINE_TOKEN
+      }
+    }
+  ).catch(err => console.log("LINE ERROR:", err));
 }
 
 const transporter = nodemailer.createTransport({
@@ -63,7 +58,8 @@ const DailyReport = require("./models/DailyReport");
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
-    cors: { origin: "*" }
+    cors: { origin: "*" },
+    transports: ["websocket", "polling"]
 });
 const otpStore = {};
 app.use(cors());
@@ -1529,10 +1525,14 @@ app.post("/api/upload-profile", upload.single("image"), async (req, res) => {
 });
 
 app.get("/", (req, res) => {
+  console.log("🔥 ROOT HIT");
   res.send("SERVER WORKING OK");
 });
 
 const PORT = process.env.PORT;
+
+server.keepAliveTimeout = 120000;
+server.headersTimeout = 120000;
 
 server.listen(PORT, '0.0.0.0', () => {
   console.log("🔥 SERVER STARTED ON PORT " + PORT);
