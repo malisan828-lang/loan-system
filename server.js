@@ -1,7 +1,7 @@
 require("dotenv").config();
 
 const http = require("http");
-const { Server } = require("socket.io");
+// const { Server } = require("socket.io");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const express = require("express");
@@ -44,7 +44,7 @@ async function sendLineMessage(text) {
   ).catch(err => console.log("LINE ERROR:", err));
 }
 
-const transporter = nodemailer.createTransport({
+const transporter = nodemailer.createTransport({ 
   service: "gmail",
   auth: {
     user: process.env.EMAIL_USER,
@@ -56,11 +56,6 @@ const Loan = require("./models/Loan");
 const Wallet = require("./models/Wallet");
 const DailyReport = require("./models/DailyReport");
 const app = express();
-const server = http.createServer(app);
-const io = new Server(server, {
-    cors: { origin: "*" },
-    transports: ["websocket", "polling"]
-});
 const otpStore = {};
 app.use(cors());
 app.use(express.json());
@@ -473,7 +468,7 @@ date: new Date()
 
 await newLoan.save();
 
-io.emit("customersUpdated");
+// io.emit("customersUpdated");
 
 /* ===== หักเงินจาก wallet ===== */
 
@@ -523,7 +518,7 @@ app.post("/api/loans/:id/pay", authMiddleware, async (req,res)=>{
 
         await loan.save();
          
-        io.emit("customersUpdated");
+        // io.emit("customersUpdated");
         res.json({success:true});
 
     }catch(err){
@@ -613,7 +608,7 @@ loan.status = "closed";
 
 await loan.save();
 
-io.emit("customersUpdated");
+// io.emit("customersUpdated");
 res.json({success:true});
 
 }catch(err){
@@ -648,7 +643,7 @@ date: new Date()
 
 await loan.save();
 
-io.emit("customersUpdated");
+// io.emit("customersUpdated");
 res.json({success:true});
 
 }catch(err){
@@ -816,7 +811,7 @@ date: new Date()
 
 await newLoanDoc.save();
 
-io.emit("customersUpdated");
+// io.emit("customersUpdated");
 
 /* =========================
    ส่งผลกลับ
@@ -1525,15 +1520,9 @@ app.post("/api/upload-profile", upload.single("image"), async (req, res) => {
 });
 
 app.get("/", (req, res) => {
-  console.log("🔥 ROOT HIT");
   res.send("SERVER WORKING OK");
 });
 
-const PORT = process.env.PORT;
-
-server.keepAliveTimeout = 120000;
-server.headersTimeout = 120000;
-
-server.listen(PORT, '0.0.0.0', () => {
-  console.log("🔥 SERVER STARTED ON PORT " + PORT);
+app.listen(process.env.PORT, "0.0.0.0", () => {
+  console.log("🔥 EXPRESS SERVER RUNNING");
 });
