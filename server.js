@@ -1532,7 +1532,7 @@ app.get("/", (req, res) => {
   res.send("SERVER WORKING OK");
 });
 
-const PORT = process.env.PORT || 10000;
+const PORT = process.env.PORT;
 
 server.listen(PORT, '0.0.0.0', () => {
   console.log("🔥 SERVER STARTED ON PORT " + PORT);
