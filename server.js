@@ -59,7 +59,7 @@ const app = express();
 const otpStore = {};
 app.use(cors());
 app.use(express.json());
-app.use(express.static("public"));
+// app.use(express.static("public"));
 app.use("/uploads", express.static("uploads"));
 
 
@@ -1134,49 +1134,49 @@ const message = `📥 แจ้งโอนเงิน
 ${note || "-"}`;
 
 // ส่งข้อความ
-await axios.post(
-    "https://api.line.me/v2/bot/message/push",
-    {
-        to: GROUP_ID,
-        messages: [
-            {
-                type: "text",
-                text: message
-            }
-        ]
-    },
-    {
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer " + LINE_TOKEN
-        }
+axios.post(
+  "https://api.line.me/v2/bot/message/push",
+  {
+    to: GROUP_ID,
+    messages: [
+      {
+        type: "text",
+        text: message
+      }
+    ]
+  },
+  {
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + LINE_TOKEN
     }
-);
+  }
+).catch(err => console.log("LINE TEXT ERROR:", err));
 
 // 🔥 ส่งรูป
 if(req.file){
 
     const imageUrl = `${process.env.BASE_URL}/uploads/${req.file.filename}`;
 
-    await axios.post(
-        "https://api.line.me/v2/bot/message/push",
-        {
-            to: GROUP_ID,
-            messages: [
-                {
-                    type: "image",
-                    originalContentUrl: imageUrl,
-                    previewImageUrl: imageUrl
-                }
-            ]
-        },
-        {
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": "Bearer " + LINE_TOKEN
-            }
-        }
-    );
+    axios.post(
+  "https://api.line.me/v2/bot/message/push",
+  {
+    to: GROUP_ID,
+    messages: [
+      {
+        type: "image",
+        originalContentUrl: imageUrl,
+        previewImageUrl: imageUrl
+      }
+    ]
+  },
+  {
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + LINE_TOKEN
+    }
+  }
+).catch(err => console.log("LINE IMAGE ERROR:", err));
 }
 
 // =========================
@@ -1217,7 +1217,7 @@ ${note || "-"}`;
 // 🔥 1️⃣ ส่งข้อความก่อน
 // =========================
 
-await axios.post(
+axios.post(
   "https://api.line.me/v2/bot/message/push",
   {
     to: "C338efe9ae62bab61956ef8913fd2dddc",
@@ -1234,7 +1234,7 @@ await axios.post(
       "Authorization": "Bearer " + LINE_TOKEN
     }
   }
-);
+).catch(err => console.log("REQUEST TEXT ERROR:", err));
 
 
 // =========================
@@ -1246,7 +1246,7 @@ if(req.file){
 // ❗ ต้องมี URL ที่เข้าถึงได้ (ngrok)
 const imageUrl = `${process.env.BASE_URL}/uploads/${req.file.filename}`;
 
-await axios.post(
+axios.post(
   "https://api.line.me/v2/bot/message/push",
   {
     to: "C338efe9ae62bab61956ef8913fd2dddc",
@@ -1264,7 +1264,7 @@ await axios.post(
       "Authorization": "Bearer " + LINE_TOKEN
     }
   }
-);
+).catch(err => console.log("REQUEST IMAGE ERROR:", err));
 
 }
 
@@ -1520,6 +1520,7 @@ app.post("/api/upload-profile", upload.single("image"), async (req, res) => {
 });
 
 app.get("/", (req, res) => {
+  console.log("🔥 ROOT HIT");
   res.send("SERVER WORKING OK");
 });
 
