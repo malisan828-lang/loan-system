@@ -197,6 +197,7 @@
 <th>วันที่</th>
 <th>ประเภท</th>
 <th>จำนวนเงิน</th>
+<th>จัดการ</th>
 </tr>
 </thead>
 
@@ -284,14 +285,29 @@ overdueInterest.innerText = format(loan.overdueInterest);
 const tbody = document.getElementById("paymentHistory");
 tbody.innerHTML = "";
 
-(loan.paymentHistory || []).forEach(p=>{
+(loan.paymentHistory || []).forEach((p, index)=>{
 
 const row = document.createElement("tr");
 
 row.innerHTML = `
 <td>${new Date(p.date).toLocaleDateString()}</td>
-<td>${p.type === "paid" ? "จ่าย" : "ค้าง"}</td>
+
+<td>
+<span class="${p.type === "paid" ? "badge-green" : "badge-red"}">
+${p.type === "paid" ? "จ่าย" : "ค้าง"}
+</span>
+</td>
+
 <td>${format(p.amount)}</td>
+
+<td>
+${p.type === "paid" ? `
+<button class="btn-cancel"
+onclick="cancelPayment(${index})">
+ยกเลิก
+</button>
+` : "-"}
+</td>
 `;
 
 tbody.appendChild(row);
@@ -310,7 +326,78 @@ window.location.href = "reloan.html?id="+loan._id;
 
 loadCustomer();
 
+function cancelPayment(index){
+
+showConfirm("ยืนยันยกเลิกการจ่าย?", async ()=>{
+
+const res = await fetch(`/api/loans/${loanId}/cancel-payment/${index}`,{
+method:"POST",
+headers:{
+"Authorization":"Bearer "+token
+}
+});
+
+const result = await res.json();
+
+if(result.success){
+showToast("ยกเลิกสำเร็จ");
+loadCustomer();
+}else{
+alert(result.message || "เกิดข้อผิดพลาด");
+}
+
+});
+
+}
+
+let confirmCallback = null;
+
+function showConfirm(message, callback){
+    document.getElementById("confirmMessage").innerText = message;
+    document.getElementById("confirmModal").classList.add("active");
+    confirmCallback = callback;
+}
+
+function closeConfirm(){
+    document.getElementById("confirmModal").classList.remove("active");
+}
+
+function handleConfirm(){
+    closeConfirm();
+    if(confirmCallback){
+        confirmCallback();
+    }
+}
+
+function showToast(message){
+
+const toast = document.getElementById("toast");
+
+toast.innerText = message;
+toast.classList.add("show");
+
+// 🔥 หายเอง
+setTimeout(()=>{
+    toast.classList.remove("show");
+}, 2500);
+
+}
 </script>
 
+
+<!-- ✅ Confirm Modal -->
+<div id="confirmModal" class="modal-overlay">
+<div class="modal-box">
+<h3 id="confirmTitle">ยืนยัน</h3>
+<p id="confirmMessage">คุณแน่ใจหรือไม่?</p>
+
+<div class="modal-buttons">
+<button class="btn cancel" onclick="closeConfirm()">ยกเลิก</button>
+<button class="btn success" onclick="handleConfirm()">ตกลง</button>
+</div>
+
+</div>
+</div>
+<div id="toast" class="toast"></div>
 </body>
 </html>

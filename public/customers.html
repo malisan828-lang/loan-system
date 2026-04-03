@@ -63,7 +63,6 @@
 <th>พนักงาน</th>
 <th>ลูกค้า</th>
 <th>เมือง</th>
-<th>ผู้ค้ำ</th>
 <th>ยอดกู้</th>
 <th>คงเหลือ</th>
 <th>ยอดเก็บต่อวัน</th>
@@ -76,21 +75,14 @@
 
 </div>
 
-<!-- ================= GUARANTOR MODAL ================= -->
-
-<div id="guarantorModal" class="modal-overlay">
-<div class="modal-box">
-<h3>ข้อมูลผู้ค้ำ</h3>
-<div id="guarantorInfo"></div>
-<button class="primary-btn" onclick="closeGuarantor()">ปิด</button>
-</div>
-</div>
 
 <script src="/js/app.js"></script>
 <script src="/socket.io/socket.io.js"></script>
 <script>
 
 const token = localStorage.getItem("token");
+
+let confirmCallback = null;
 
 function format(num){
     return Number(num || 0).toLocaleString();
@@ -104,6 +96,7 @@ async function loadCustomers(){
 
     const result = await res.json();
     const data = result.customers;
+    window.currentLoans = data;
     const tbody = document.getElementById("customerBody");
     tbody.innerHTML = "";
 
@@ -163,23 +156,17 @@ if(remainingToday < 0){
         <td>${loan.borrowerName || "-"}</td>
         <td>${loan.borrowerDistrict || "-"}</td>
 
-        <td>
-        ${loan.hasGuarantor
-        ? `<button class="btn-success"
-        onclick='showGuarantor(${JSON.stringify(loan)})'>
-        ดู
-        </button>`
-        : "-"}
-        </td>
 
         <td>${format(loan.loanAmount)}</td>
         <td>${format(loan.remainingAmount)}</td>
 
         <td>
-        <input type="number"
+        <input type="text"
 class="daily-input"
 id="amount_${loan._id}"
-placeholder="${format(remainingToday || loan.installment || 0)}">
+value="${format(remainingToday || loan.installment || 0)}"
+data-default="${remainingToday || loan.installment || 0}"
+readonly>
         </td>
 
         <td>
@@ -189,10 +176,10 @@ placeholder="${format(remainingToday || loan.installment || 0)}">
         จ่าย
         </button>
 
-        <button class="action-btn btn-overdue"
-        onclick="markOverdue('${loan._id}')">
-        ค้าง
-        </button>
+        <button class="action-btn btn-edit"
+onclick="enableEdit('${loan._id}')">
+แก้ไข
+</button>
 
         <button class="action-btn btn-view"
         onclick="window.location='customer-detail.html?id=${loan._id}'">
@@ -223,25 +210,89 @@ placeholder="${format(remainingToday || loan.installment || 0)}">
 
 async function payInstallment(id){
 
-    const amount=Number(document.getElementById("amount_"+id).value);
-    if(!amount) return alert("กรอกยอดเงิน");
+const input = document.getElementById("amount_"+id);
+const amount = Number(input.value.replace(/,/g, ""));
 
-    await fetch(`/api/loans/${id}/pay-installment`,{
-        method:"POST",
-        headers:{
-            "Content-Type":"application/json",
-            "Authorization":"Bearer "+token
-        },
-        body:JSON.stringify({amount})
-    });
+if(!amount || amount <= 0){
+    return showToast("จำนวนเงินไม่ถูกต้อง");
+}
 
+// 🔥 ยิงครั้งแรก
+const res = await fetch(`/api/loans/${id}/pay-installment`,{
+    method:"POST",
+    headers:{
+        "Content-Type":"application/json",
+        "Authorization":"Bearer "+token
+    },
+    body:JSON.stringify({amount})
+});
+
+const result = await res.json();
+
+// ==========================
+// 🔥 ต้อง confirm
+// ==========================
+if(result.needConfirm){
+
+showConfirm(result.message, async ()=>{
+
+const res2 = await fetch(`/api/loans/${id}/pay-installment`,{
+    method:"POST",
+    headers:{
+        "Content-Type":"application/json",
+        "Authorization":"Bearer "+token
+    },
+    body:JSON.stringify({
+        amount,
+        force:true
+    })
+});
+
+const result2 = await res2.json();
+
+if(result2.success){
+showToast("จ่ายซ้ำสำเร็จ");
+
+// 🔥 หน่วงก่อน refresh
+setTimeout(()=>{
     loadCustomers();
+}, 500);
+
+}else{
+showToast("ผิดพลาด");
+}
+
+});
+
+return;
+}
+
+// ==========================
+// 🔥 ปกติ
+// ==========================
+if(result.success){
+showToast("จ่ายสำเร็จ");
+
+setTimeout(()=>{
+    loadCustomers();
+}, 500);
+
+}else{
+showToast(result.message || "ผิดพลาด");
+}
+
+// reset input
+input.setAttribute("readonly", true);
+input.style.border = "";
+input.style.background = "";
+
+loadCustomers();
 }
 
 async function markOverdue(id){
 
     const amount=Number(document.getElementById("amount_"+id).value);
-    if(!amount) return alert("กรอกยอดเงิน");
+    if(!amount) return showToast("กรอกยอดเงิน");
 
     await fetch(`/api/loans/${id}/overdue`,{
         method:"POST",
@@ -255,24 +306,6 @@ async function markOverdue(id){
     loadCustomers();
 }
 
-function showGuarantor(loan){
-
-    document.getElementById("guarantorInfo").innerHTML=`
-    <p><b>ชื่อ:</b> ${loan.guarantorName || "-"}</p>
-    <p><b>เบอร์:</b> ${loan.guarantorPhone || "-"}</p>
-    <p><b>ที่อยู่:</b> ${loan.guarantorAddress || "-"}</p>
-    <p><b>แขวง:</b> ${loan.guarantorProvince || "-"}</p>
-    <p><b>เมือง:</b> ${loan.guarantorDistrict || "-"}</p>
-    <p><b>บ้าน:</b> ${loan.guarantorVillage || "-"}</p>
-    <p><b>รหัสไปรษณีย์:</b> ${loan.guarantorZip || "-"}</p>
-    `;
-
-    document.getElementById("guarantorModal").style.display="flex";
-}
-
-function closeGuarantor(){
-    document.getElementById("guarantorModal").style.display="none";
-}
 
 loadCustomers();
 
@@ -311,7 +344,69 @@ socket.on("customersUpdated", () => {
         loadWallet(); // 👈 ตัวนี้คือสิ่งที่คุณต้องการ
     }, 300);
 });
-</script>
 
+function enableEdit(id){
+    const input = document.getElementById("amount_"+id);
+
+    input.removeAttribute("readonly");
+    input.focus();
+    input.addEventListener("input", function(e){
+    let value = e.target.value.replace(/,/g, "");
+    if(isNaN(value)) return;
+
+    e.target.value = Number(value).toLocaleString();
+});
+
+    // ใส่เส้น highlight ตอนแก้
+    input.style.border = "2px solid orange";
+    input.value = input.getAttribute("data-default");
+}
+
+function showConfirm(message, callback){
+    document.getElementById("confirmMessage").innerText = message;
+    document.getElementById("confirmModal").classList.add("active");
+    confirmCallback = callback;
+}
+
+function closeConfirm(){
+    document.getElementById("confirmModal").classList.remove("active");
+}
+
+async function handleConfirm(){
+    closeConfirm();
+
+    if(confirmCallback){
+        await confirmCallback(); // 🔥 ตัวนี้คือจุดแก้
+    }
+}
+
+function showToast(message){
+
+const toast = document.getElementById("toast");
+
+toast.innerText = message;
+toast.classList.add("show");
+
+setTimeout(()=>{
+    toast.classList.remove("show");
+}, 2500);
+
+}
+</script>
+<!-- ✅ Confirm Modal -->
+<div id="confirmModal" class="modal-overlay">
+<div class="modal-box">
+<h3 id="confirmTitle">ยืนยัน</h3>
+<p id="confirmMessage">คุณแน่ใจหรือไม่?</p>
+
+<div class="modal-buttons">
+<button class="btn cancel" onclick="closeConfirm()">ยกเลิก</button>
+<button class="btn success" onclick="handleConfirm()">ตกลง</button>
+</div>
+
+</div>
+</div>
+
+<div id="toast" class="toast"></div>
 </body>
 </html>

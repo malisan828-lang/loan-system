@@ -239,39 +239,104 @@ alert("เกิด error ในระบบ wallet");
 
 }
 
-async function topup(employeeId){
+function topup(employeeId){
 
 const amount = Number(document.getElementById("topup_"+employeeId).value);
 
-if(!amount) return alert("กรอกจำนวนเงิน");
+if(!amount) return showToast("กรอกจำนวนเงิน");
 
-if(!confirm("ยืนยันเติมเงิน "+format(amount)+" ?")) return;
+// 🔥 ใช้ confirm แบบ modal (เหมือน customers)
+showConfirm("ยืนยันเติมเงิน "+format(amount)+" ?", async ()=>{
 
-await fetch("/api/admin/topup",{
+  const res = await fetch("/api/admin/topup",{
 
-method:"POST",
+    method:"POST",
 
-headers:{
-"Content-Type":"application/json",
-Authorization:"Bearer "+token
-},
+    headers:{
+      "Content-Type":"application/json",
+      Authorization:"Bearer "+token
+    },
 
-body:JSON.stringify({
-employeeId,
-amount
-})
+    body:JSON.stringify({
+      employeeId,
+      amount
+    })
+
+  });
+
+  const result = await res.json();
+
+  if(result.success){
+    showToast("เติมเงินสำเร็จ");
+    loadWallets();
+  }else{
+    showToast(result.message || "ผิดพลาด");
+  }
 
 });
 
-alert("เติมเงินสำเร็จ");
+}
 
-loadWallets();
+function showToast(message){
 
+  const toast = document.getElementById("toast");
+
+  toast.innerText = message;
+  toast.classList.add("show");
+
+  setTimeout(()=>{
+    toast.classList.remove("show");
+  }, 2500);
 }
 
 loadWallets();
 
-</script>
+let confirmCallback = null;
 
+function showConfirm(message, callback){
+
+  confirmCallback = null; // 🔥 reset ก่อน
+
+  document.getElementById("confirmMessage").innerText = message;
+  document.getElementById("confirmModal").classList.add("active");
+
+  confirmCallback = callback;
+}
+
+function closeConfirm(){
+  document.getElementById("confirmModal").classList.remove("active");
+}
+
+async function handleConfirm(){
+
+  const btn = document.querySelector("#confirmModal .btn.success");
+  btn.innerText = "กำลังทำรายการ...";
+  btn.disabled = true;
+
+  closeConfirm();
+
+  if(confirmCallback){
+    await confirmCallback();
+  }
+
+  btn.innerText = "ตกลง";
+  btn.disabled = false;
+}
+
+</script>
+<!-- CONFIRM MODAL -->
+<div id="confirmModal" class="modal-overlay">
+  <div class="modal-box">
+    <h3>ยืนยัน</h3>
+    <p id="confirmMessage">คุณแน่ใจหรือไม่?</p>
+
+    <div class="modal-buttons">
+      <button class="btn cancel" onclick="closeConfirm()">ยกเลิก</button>
+      <button class="btn success" onclick="handleConfirm()">ตกลง</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
 </body>
 </html>

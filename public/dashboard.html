@@ -149,29 +149,29 @@ border-bottom:1px solid rgba(255,255,255,0.08);
 <th colspan="4" class="monthly">สรุปรายเดือน</th>
 
 <th rowspan="2">กำไรรวม</th>
-<th rowspan="2">รอดัดเสีย</th>
+<th rowspan="2">รอคัดเสีย</th>
 <th rowspan="2">เสียไม่เกิน 4 เท่า</th>
 <th rowspan="2">ส่วนต่าง</th>
-<th rowspan="2">เกินเสีย 3 เดือน</th>
+<th rowspan="2">เก็บเฉลี่ย 3 เดือน</th>
 <th rowspan="2">เสีย 3 เดือน</th>
+<th rowspan="2">เสียไม่เกินยอดเก็บ</th>
 
 <th rowspan="2">เปิดใหม่</th>
 <th rowspan="2">ปัจจุบัน</th>
-<th rowspan="2">ไม่ผ่าน</th>
 <th rowspan="2">⭐</th>
 </tr>
 
 <tr>
 
-<th class="daily">ยอดเติม</th>
+<th class="daily">ยอดเต็ม</th>
 <th class="daily">ยอดเก็บ</th>
 <th class="daily">%</th>
 <th class="daily">กำไร</th>
 
-<th class="monthly">ยอดเติม</th>
+<th class="monthly">ยอดเต็ม</th>
 <th class="monthly">ยอดเก็บ</th>
 <th class="monthly">%</th>
-<th class="monthly">กำไร</th>
+<th class="monthly">กำไรรวม</th>
 
 </tr>
 
@@ -189,118 +189,148 @@ border-bottom:1px solid rgba(255,255,255,0.08);
 
 <script>
 
+// ===== ตรวจ token =====
 const token = localStorage.getItem("token");
 
 if(!token){
-    window.location.href = "/index.html";
+    window.location.href = "/";
 }
 
+// ===== format =====
 function format(n){
     return Number(n || 0).toLocaleString();
 }
 
+// ===== ป้องกันโหลดซ้อน =====
+let isLoading = false;
+
+// ===== โหลดข้อมูล =====
 async function load(){
 
-    const res = await fetch("/api/dashboard/summary",{
-        headers:{ Authorization:"Bearer " + token }
-    });
+    if(isLoading) return;
+    isLoading = true;
 
-    const data = await res.json();
+    try{
 
-    // ===== CARD =====
-    document.getElementById("totalCapital").innerText = format(data.totalCapital);
-    document.getElementById("releasedToday").innerText = format(data.releasedToday);
-    document.getElementById("collectedToday").innerText = format(data.collectedToday);
-    document.getElementById("profitToday").innerText = format(data.profitToday);
+        const res = await fetch("/api/dashboard/summary",{
+            headers:{ Authorization:"Bearer " + token }
+        });
 
-    const tbody = document.getElementById("tableBody");
-    tbody.innerHTML = "";
+        // 🔐 token หมดอายุ
+        if(res.status === 401){
+            localStorage.removeItem("token");
+            window.location.href = "/";
+            return;
+        }
 
-    data.ranking.forEach(u => {
+        const data = await res.json();
 
-        // ✅ ใช้ object ตรง ๆ ไม่ต้อง split แล้ว
-        const members = u.members || [];
+        // ===== CARD =====
+        document.getElementById("totalCapital").innerText = format(data.totalCapital);
+        document.getElementById("releasedToday").innerText = format(data.releasedToday);
+        document.getElementById("collectedToday").innerText = format(data.collectedToday);
+        document.getElementById("profitToday").innerText = format(data.profitToday);
 
-        const membersHTML = members.map(m=>`
-            <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+        const tbody = document.getElementById("tableBody");
+        tbody.innerHTML = "";
 
-                <span>${m.name}</span>
+        (data.ranking || []).forEach(u => {
 
-                <img 
-                    src="/assets/icons/image-icon.png"
-                    style="
-                        width:14px;
-                        height:14px;
-                        cursor:pointer;
-                        opacity:0.7;
-                    "
-                    onclick="previewImage('${m.image}')"
-                >
+            const members = u.members || [];
 
-            </div>
-        `).join("");
+            const membersHTML = members.map(m=>`
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+                    <span>${m.name}</span>
 
-        tbody.innerHTML += `
-        <tr>
+                    <img 
+                        src="/assets/icons/image-icon.png"
+                        style="
+                            width:14px;
+                            height:14px;
+                            cursor:pointer;
+                            opacity:0.7;
+                        "
+                        onclick="previewImage('${m.image}')"
+                    >
+                </div>
+            `).join("");
 
-            <td><strong>${u.name}</strong></td>
+            tbody.innerHTML += `
+            <tr>
 
-            <td style="text-align:left;font-size:12px">
-                ${membersHTML}
-            </td>
+                <td><strong>${u.name}</strong></td>
 
-            <td>${format(u.dailyRelease)}</td>
-            <td>${format(u.dailyCollect)}</td>
-            <td>${u.dailyPercent.toFixed(2)}%</td>
-            <td class="${u.dailyProfit>=0?'green':'red'}">${format(u.dailyProfit)}</td>
+                <td style="text-align:left;font-size:12px">
+                    ${membersHTML}
+                </td>
 
-            <td>${format(u.monthlyRelease)}</td>
-            <td>${format(u.monthlyCollect)}</td>
-            <td>${u.monthlyPercent.toFixed(2)}%</td>
-            <td class="${u.monthlyProfit>=0?'green':'red'}">${format(u.monthlyProfit)}</td>
+                <td>${format(u.dailyFull)}</td>
+                <td>${format(u.dailyCollect)}</td>
+                <td>${(u.dailyPercent || 0).toFixed(2)}%</td>
+                <td class="green">${format(u.dailyProfit)}</td>
 
-            <td class="${u.totalProfit>=0?'green':'red'}">${format(u.totalProfit)}</td>
+                <td>${format(u.monthlyFull)}</td>
+                <td>${format(u.monthlyCollect)}</td>
+                <td>${(u.monthlyPercent || 0).toFixed(2)}%</td>
+                <td class="${u.monthlyTotalProfit>=0?'green':'red'}">${format(u.monthlyTotalProfit)}</td>
 
-            <td>${format(u.safeDebt)}</td>
-            <td>${format(u.risk4x)}</td>
-            <td>${format(u.diff)}</td>
-            <td>${format(u.over3month)}</td>
-            <td>${format(u.loss3month)}</td>
+                <td class="${u.totalProfit>=0?'green':'red'}">${format(u.totalProfit)}</td>
 
-            <td>${u.newToday}</td>
-            <td>${u.active}</td>
-            <td>${u.fail}</td>
-            <td>${u.star}</td>
+                <td>${format(u.waitingCut)}</td>
+                <td>${format(u.loss4x)}</td>
+                <td>${format(u.diffLossCollect)}</td>
+                <td>${format(u.avg3month)}</td>
+                <td>${format(u.loss3month)}</td>
+                <td>${format(u.lossNotOverCollect)}</td>
 
-        </tr>
-        `;
-    });
+                <td>${u.newToday}</td>
+                <td>${u.active}</td>
+                <td>${u.star}</td>
 
+            </tr>
+            `;
+        });
+
+    }catch(err){
+        console.error("Dashboard load error:", err);
+    }
+
+    isLoading = false;
 }
 
 // ===== Modal =====
 function previewImage(src){
     if(!src) return;
 
-    document.getElementById("modalImg").src = src;
-    document.getElementById("imageModal").style.display = "flex";
+    const img = document.getElementById("modalImg");
+    const modal = document.getElementById("imageModal");
+
+    if(img && modal){
+        img.src = src;
+        modal.style.display = "flex";
+    }
 }
 
 function closeModal(){
-    document.getElementById("imageModal").style.display = "none";
+    const modal = document.getElementById("imageModal");
+    if(modal){
+        modal.style.display = "none";
+    }
 }
 
+// ESC ปิด modal
 document.addEventListener("keydown", e=>{
     if(e.key === "Escape"){
         closeModal();
     }
 });
 
+// ===== เริ่มโหลด =====
 load();
 
-setInterval(() => {
-    loadCustomers();
-}, 3000);
+// ===== refresh ทุก 3 วิ =====
+setInterval(load, 3000);
+
 </script>
 
 <div id="imageModal" onclick="closeModal()" style="

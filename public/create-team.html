@@ -136,40 +136,95 @@ async function loadUsers(){
 loadUsers();
 
 // สร้างทีม
-async function createTeam(){
+function createTeam(){
 
     const name = document.getElementById("teamName").value.trim();
     const leader = document.getElementById("leader").value;
     const assistant = document.getElementById("assistant").value;
 
     if(!name || !leader || !assistant){
-        return alert("กรอกข้อมูลให้ครบ");
+        return showToast("กรอกข้อมูลให้ครบ");
     }
 
     if(leader === assistant){
-        return alert("ห้ามเลือกคนเดียวกัน");
+        return showToast("ห้ามเลือกคนเดียวกัน");
     }
 
-    const res = await fetch("/api/teams",{
-        method:"POST",
-        headers:{
-            "Content-Type":"application/json",
-            Authorization:"Bearer "+token
-        },
-        body:JSON.stringify({ name, leader, assistant })
+    // 🔥 ใช้ confirm แบบเดียวกับระบบอื่น
+    showConfirm("ยืนยันสร้างทีม "+name+" ?", async ()=>{
+
+        const res = await fetch("/api/teams",{
+            method:"POST",
+            headers:{
+                "Content-Type":"application/json",
+                Authorization:"Bearer "+token
+            },
+            body:JSON.stringify({ name, leader, assistant })
+        });
+
+        const data = await res.json();
+
+        if(data.success){
+            showToast("สร้างทีมสำเร็จ");
+
+            setTimeout(()=>{
+                window.location.href = "/admin-teams.html";
+            }, 1200);
+
+        }else{
+            showToast("เกิดข้อผิดพลาด");
+        }
+
     });
 
-    const data = await res.json();
-
-    if(data.success){
-        alert("สร้างทีมสำเร็จ");
-        window.location.href = "/admin-teams.html";
-    }else{
-        alert("เกิดข้อผิดพลาด");
-    }
 }
 
+let confirmCallback = null;
+
+function showConfirm(message, callback){
+  document.getElementById("confirmMessage").innerText = message;
+  document.getElementById("confirmModal").classList.add("active");
+  confirmCallback = callback;
+}
+
+function closeConfirm(){
+  document.getElementById("confirmModal").classList.remove("active");
+}
+
+async function handleConfirm(){
+  closeConfirm();
+  if(confirmCallback){
+    await confirmCallback();
+  }
+}
+
+function showToast(message){
+
+  const toast = document.getElementById("toast");
+
+  toast.innerText = message;
+  toast.classList.add("show");
+
+  setTimeout(()=>{
+    toast.classList.remove("show");
+  }, 2500);
+}
 </script>
+
+<!-- CONFIRM MODAL -->
+<div id="confirmModal" class="modal-overlay">
+  <div class="modal-box">
+    <h3>ยืนยัน</h3>
+    <p id="confirmMessage"></p>
+
+    <div class="modal-buttons">
+      <button class="btn cancel" onclick="closeConfirm()">ยกเลิก</button>
+      <button class="btn success" onclick="handleConfirm()">ตกลง</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
 
 </body>
 </html>

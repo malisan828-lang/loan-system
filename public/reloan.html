@@ -283,12 +283,12 @@ alert("กรอกยอดกู้ใหม่ก่อน");
 return;
 }
 
-document.getElementById("confirmModal").style.display="flex";
+document.getElementById("confirmModal").classList.add("active");
 
 }
 
 function closeConfirm(){
-document.getElementById("confirmModal").style.display="none";
+document.getElementById("confirmModal").classList.remove("active");
 }
 
 
@@ -354,7 +354,7 @@ function showSuccess(amount){
 document.getElementById("successAmount").innerText =
 Number(amount).toLocaleString();
 
-document.getElementById("successModal").style.display="flex";
+document.getElementById("successModal").classList.add("active");
 
 }
 

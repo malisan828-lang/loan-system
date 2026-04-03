@@ -218,26 +218,38 @@ document.getElementById("loanDays").addEventListener("change", calculateLoan);
 /* ===== เปิด Confirm Modal ===== */
 
 function openConfirm(){
-document.getElementById("confirmModal").style.display = "flex";
+  document.getElementById("confirmModal").classList.add("active");
 }
 
 function closeConfirm(){
-document.getElementById("confirmModal").style.display = "none";
+  const modal = document.getElementById("confirmModal");
+  if(modal){
+    modal.classList.remove("active");
+  }
 }
 
 
 /* ===== ยืนยันแล้วบันทึกจริง ===== */
 
-async function confirmSave(){
+async function confirmSave() {
 
   const btn = document.getElementById("submitBtn");
 btn.innerText = "กำลังบันทึก...";
 btn.disabled = true;
 
-document.getElementById("confirmModal").style.display = "none";
+document.getElementById("confirmModal").classList.remove("active");
 
 const token = localStorage.getItem("token");
-const user = JSON.parse(localStorage.getItem("user"));
+const userRaw = localStorage.getItem("user");
+
+if(!userRaw){
+  alert("Session หมด กรุณา login ใหม่");
+  btn.innerText = "บันทึกข้อมูล";
+  btn.disabled = false;
+  return;
+}
+
+const user = JSON.parse(userRaw);
 
 const amount = Number(document.getElementById("loanAmount").value);
 const days = Number(document.getElementById("loanDays").value);
@@ -346,7 +358,7 @@ if(result.success){
   btn.innerText = "บันทึกข้อมูล";
 btn.disabled = false;
 
-document.getElementById("successModal").style.display = "flex";
+showToast("บันทึกข้อมูลสำเร็จ");
 
 resetForm();
 
@@ -393,6 +405,18 @@ function closeModal(){
   document.getElementById("successModal").style.display = "none";
 }
 
+
+function showToast(message){
+
+  const toast = document.getElementById("toast");
+
+  toast.innerText = message;
+  toast.classList.add("show");
+
+  setTimeout(()=>{
+    toast.classList.remove("show");
+  }, 2500);
+}
 </script>
 
 
@@ -425,5 +449,7 @@ function closeModal(){
 </div>
 
 </div>
+
+<div id="toast" class="toast"></div>
 </body>
 </html>

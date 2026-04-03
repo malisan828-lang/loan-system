@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Global Ledger | Executive Financing Platform</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Manrope:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-tertiary-container": "#8a92aa",
+              "tertiary-fixed-dim": "#bec6e0",
+              "surface-container-low": "#151b2b",
+              "tertiary-container": "#232b3f",
+              "on-secondary-fixed": "#341100",
+              "secondary-fixed": "#ffdbca",
+              "on-primary-fixed-variant": "#003ea8",
+              "surface-bright": "#33394a",
+              "on-primary-container": "#658dff",
+              "outline-variant": "#44474e",
+              "tertiary": "#bec6e0",
+              "inverse-on-surface": "#2a3040",
+              "primary-container": "#00266d",
+              "secondary-container": "#ec6a06",
+              "on-background": "#dde2f8",
+              "primary-fixed-dim": "#b4c5ff",
+              "outline": "#8f9099",
+              "on-tertiary-fixed": "#131b2e",
+              "on-tertiary": "#283044",
+              "background": "#0d1322",
+              "on-surface": "#dde2f8",
+              "on-tertiary-fixed-variant": "#3f465c",
+              "primary": "#b4c5ff",
+              "surface": "#0d1322",
+              "surface-container-lowest": "#080e1d",
+              "inverse-surface": "#dde2f8",
+              "surface-variant": "#2f3445",
+              "on-primary-fixed": "#00174b",
+              "inverse-primary": "#0053db",
+              "on-secondary-container": "#4a1c00",
+              "on-error": "#690005",
+              "primary-fixed": "#dbe1ff",
+              "secondary": "#ffb690",
+              "surface-container-high": "#242a3a",
+              "on-secondary-fixed-variant": "#783200",
+              "on-surface-variant": "#c5c6cf",
+              "surface-tint": "#b4c5ff",
+              "error": "#ffb4ab",
+              "on-primary": "#002a78",
+              "on-error-container": "#ffdad6",
+              "surface-dim": "#0d1322",
+              "on-secondary": "#552100",
+              "surface-container-highest": "#2f3445",
+              "tertiary-fixed": "#dae2fd",
+              "error-container": "#93000a",
+              "surface-container": "#191f2f",
+              "secondary-fixed-dim": "#ffb690"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .glass-panel {
+            background: rgba(47, 52, 69, 0.4);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .hero-gradient {
+            background: linear-gradient(135deg, #b4c5ff 0%, #00266d 100%);
+        }
+        .text-gradient {
+            background: linear-gradient(135deg, #dde2f8 0%, #b4c5ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body selection:bg-secondary/30">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-[#0d1322] shadow-[0_20px_40px_rgba(0,0,0,0.3)]">
+<div class="max-w-7xl mx-auto px-8 flex justify-between items-center h-20">
+<div class="flex items-center gap-3">
+
+<img 
+  alt="Logo"
+  class="h-10 w-auto"
+  src="/assets/logo.png"
+/>
+
+<span class="text-xl font-bold tracking-widest text-[#dde2f8] uppercase font-['Manrope']">
+  loan system
+</span>
+
+</div>
+<nav class="hidden md:flex items-center gap-8">
+<a class="font-['Manrope'] tracking-tight text-[#b4c5ff] border-b-2 border-[#ec6a06] transition-all duration-300 ease-in-out" href="#">Capital Desk</a>
+<a class="font-['Manrope'] tracking-tight text-[#c5c6cf] hover:text-[#dde2f8] hover:bg-[#242a3a] px-3 py-1 rounded transition-all duration-300 ease-in-out" href="#">Institutional</a>
+<a class="font-['Manrope'] tracking-tight text-[#c5c6cf] hover:text-[#dde2f8] hover:bg-[#242a3a] px-3 py-1 rounded transition-all duration-300 ease-in-out" href="#">Market Data</a>
+</nav>
+<button onclick="goLogin()" class="bg-secondary-container text-white px-6 py-2.5 rounded-lg font-headline font-bold text-sm tracking-wide hover:brightness-110 transition-all duration-300 shadow-lg shadow-secondary-container/20">
+    เข้าสู่ระบบ
+</button>
+</div>
+</header>
+<main class="pt-20">
+<!-- Hero Section -->
+<section class="relative min-h-[795px] flex items-center overflow-hidden">
+<div class="absolute inset-0 z-0">
+<div class="absolute top-[-10%] right-[-10%] w-[600px] h-[600px] bg-primary/10 rounded-full blur-[120px]"></div>
+<div class="absolute bottom-[-10%] left-[-5%] w-[400px] h-[400px] bg-secondary/5 rounded-full blur-[100px]"></div>
+</div>
+<div class="max-w-7xl mx-auto px-8 w-full grid grid-cols-1 lg:grid-cols-12 gap-12 items-center relative z-10">
+<div class="lg:col-span-7 space-y-8">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-surface-container-high border border-outline-variant/15 text-secondary text-xs font-bold tracking-widest uppercase">
+<span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">verified</span>
+                        Sovereign Rated Financing
+                    </div>
+<h1 class="font-headline text-5xl md:text-7xl font-extrabold tracking-tight leading-[1.1]">
+                        Your Trusted Partner in <span class="text-gradient">Global Financing</span>
+</h1>
+<p class="text-on-surface-variant text-lg md:text-xl max-w-xl leading-relaxed">
+                        Fast, Transparent, and Secure Loan Solutions for Professionals. Scale your operations with institutional-grade capital deployment.
+                    </p>
+<div class="flex flex-col sm:flex-row gap-4 pt-4">
+<button onclick="goRegister()" class="px-8 py-4 bg-secondary-container text-white font-headline font-bold rounded-lg hover:scale-[1.02] transition-transform shadow-xl shadow-secondary-container/20">
+    สมัครสมาชิก
+</button>
+<button class="px-8 py-4 border border-outline-variant/30 text-on-surface font-headline font-bold rounded-lg hover:bg-surface-container-high transition-colors">
+                            View Portfolio
+                        </button>
+</div>
+</div>
+<div class="lg:col-span-5 hidden lg:block">
+<div class="relative group">
+<div class="absolute -inset-1 bg-gradient-to-r from-primary to-secondary rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
+<div class="relative bg-surface-container-low rounded-2xl overflow-hidden shadow-2xl">
+<img alt="Financing Dashboard Preview" class="w-full h-auto object-cover opacity-90" data-alt="Close-up of a high-end financial terminal display with glowing charts, dark mode UI, and sleek data visualizations" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB8jpiUXlYaWW0DIqMD-g6yDVSbUCv2jzswrGD8-rhLDBvqqSPdm9aFkDCnJ10zzgBa21Iq_9PzCkwX6X8FIkvqCA8pfhitqhIgTtIP-RPqGg4h_Vjp-FihiLODRDPThLtVrkwJRv_IC_UlhydmiJk9561bAr0_3JGz0dd6ujL0_5QAJDGHwnoPVUB8ObEXneXHLU0Dgkw_QwdMz60spuhB8mhryOhW8ZNF1Hh1LKOJGzQ6LPWCAHeMl-JkiiXfCgERrkpr5lRDeYG6"/>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Trust Bar -->
+<section class="bg-surface-container-low py-12 border-y border-outline-variant/5">
+<div class="max-w-7xl mx-auto px-8">
+<p class="text-center text-on-tertiary-container text-sm font-bold tracking-[0.2em] uppercase mb-10">Institutional Liquidity Partners</p>
+<div class="flex flex-wrap justify-center md:justify-between items-center gap-12 opacity-50 grayscale hover:grayscale-0 transition-all duration-500">
+<div class="flex items-center gap-2"><span class="material-symbols-outlined text-3xl">account_balance</span> <span class="font-headline font-bold">RESERVE</span></div>
+<div class="flex items-center gap-2"><span class="material-symbols-outlined text-3xl">corporate_fare</span> <span class="font-headline font-bold">MORGAN G.</span></div>
+<div class="flex items-center gap-2"><span class="material-symbols-outlined text-3xl">token</span> <span class="font-headline font-bold">CRYPTO-LEND</span></div>
+<div class="flex items-center gap-2"><span class="material-symbols-outlined text-3xl">security</span> <span class="font-headline font-bold">FORTRESS</span></div>
+<div class="flex items-center gap-2"><span class="material-symbols-outlined text-3xl">language</span> <span class="font-headline font-bold">GLOBAL X</span></div>
+</div>
+</div>
+</section>
+<!-- Key Features (Bento Grid Style) -->
+<section class="py-32 max-w-7xl mx-auto px-8">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+<div class="md:col-span-2 p-10 bg-surface-container-low rounded-2xl relative overflow-hidden group hover:bg-surface-container transition-colors duration-500">
+<div class="absolute top-0 right-0 p-8">
+<span class="material-symbols-outlined text-8xl text-primary/10 group-hover:text-primary/20 transition-colors">percent</span>
+</div>
+<div class="relative z-10 space-y-4">
+<span class="material-symbols-outlined text-primary text-4xl" style="font-variation-settings: 'FILL' 1;">trending_down</span>
+<h3 class="font-headline text-3xl font-bold">Low Interest Rates</h3>
+<p class="text-on-surface-variant max-w-sm">Optimized capital costs through our proprietary risk-mitigation engine. Access market-leading rates tailored to your executive profile.</p>
+</div>
+</div>
+<div class="p-10 bg-surface-container-high rounded-2xl space-y-4 hover:shadow-2xl hover:shadow-primary/5 transition-all">
+<span class="material-symbols-outlined text-secondary text-4xl" style="font-variation-settings: 'FILL' 1;">bolt</span>
+<h3 class="font-headline text-2xl font-bold">Fast Approval</h3>
+<p class="text-on-surface-variant text-sm">Decision engines running 24/7. Get your terms within minutes, not weeks.</p>
+</div>
+<div class="p-10 bg-surface-container rounded-2xl space-y-4 md:col-span-3 lg:col-span-1 border border-outline-variant/10">
+<span class="material-symbols-outlined text-primary text-4xl" style="font-variation-settings: 'FILL' 1;">calendar_month</span>
+<h3 class="font-headline text-2xl font-bold">Flexible Repayment</h3>
+<p class="text-on-surface-variant text-sm">Dynamic structures that adapt to your cash flow. Interest-only periods and balloon options available.</p>
+</div>
+</div>
+</section>
+<!-- Loan Calculator (The Interactive Experience) -->
+<section class="py-32 bg-surface-container-low relative overflow-hidden">
+<div class="max-w-7xl mx-auto px-8 grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+<div>
+<h2 class="font-headline text-4xl md:text-5xl font-bold mb-6">Precision <span class="text-secondary">Financial Forecasting</span></h2>
+<p class="text-on-surface-variant text-lg mb-8">Utilize our executive terminal to simulate your financing structure. No credit impact, full transparency.</p>
+<ul class="space-y-4">
+<li class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">check_circle</span>
+<span>No hidden facility fees</span>
+</li>
+<li class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">check_circle</span>
+<span>Real-time APR calculation</span>
+</li>
+</ul>
+</div>
+<div class="glass-panel p-8 md:p-12 rounded-3xl shadow-2xl border border-outline-variant/10">
+<div class="space-y-10">
+<div class="space-y-4">
+<div class="flex justify-between items-end">
+<label class="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Financing Amount</label>
+<span class="text-3xl font-headline font-bold text-primary">$150,000</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full w-2/3 bg-primary"></div>
+</div>
+</div>
+<div class="space-y-4">
+<div class="flex justify-between items-end">
+<label class="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Tenure (Months)</label>
+<span class="text-3xl font-headline font-bold text-primary">36</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full w-1/3 bg-secondary-container"></div>
+</div>
+</div>
+<div class="pt-10 border-t border-outline-variant/20 flex justify-between items-center">
+<div>
+<p class="text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-1">Monthly Repayment</p>
+<p class="text-4xl font-headline font-extrabold">$4,520.00</p>
+</div>
+<div class="text-right">
+<p class="text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-1">Estimated APR</p>
+<p class="text-2xl font-headline font-bold text-secondary">3.45%</p>
+</div>
+</div>
+<button class="w-full py-5 bg-primary text-on-primary font-headline font-black uppercase tracking-widest rounded-xl hover:brightness-110 transition-all">
+                            Proceed to Formal Quote
+                        </button>
+</div>
+</div>
+</div>
+</section>
+<!-- How It Works -->
+<section class="py-32 max-w-7xl mx-auto px-8">
+<div class="text-center mb-20">
+<h2 class="font-headline text-4xl font-bold mb-4">Sovereign Onboarding Protocol</h2>
+<p class="text-on-surface-variant max-w-2xl mx-auto">Our streamlined digital workflow ensures minimum friction and maximum security.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-16 relative">
+<!-- Decorative Connector Line -->
+<div class="hidden md:block absolute top-12 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-outline-variant/20 to-transparent z-0"></div>
+<div class="relative z-10 text-center space-y-6">
+<div class="w-24 h-24 rounded-full bg-surface-container-high border-4 border-background flex items-center justify-center mx-auto shadow-xl">
+<span class="font-headline text-3xl font-black text-secondary">01</span>
+</div>
+<h4 class="font-headline text-xl font-bold">Secure Identity</h4>
+<p class="text-on-surface-variant text-sm">Upload digital credentials via our encrypted sovereign vault.</p>
+</div>
+<div class="relative z-10 text-center space-y-6">
+<div class="w-24 h-24 rounded-full bg-surface-container-high border-4 border-background flex items-center justify-center mx-auto shadow-xl">
+<span class="font-headline text-3xl font-black text-secondary">02</span>
+</div>
+<h4 class="font-headline text-xl font-bold">AI Underwriting</h4>
+<p class="text-on-surface-variant text-sm">Our neural engine analyzes your portfolio for immediate structuring.</p>
+</div>
+<div class="relative z-10 text-center space-y-6">
+<div class="w-24 h-24 rounded-full bg-surface-container-high border-4 border-background flex items-center justify-center mx-auto shadow-xl">
+<span class="font-headline text-3xl font-black text-secondary">03</span>
+</div>
+<h4 class="font-headline text-xl font-bold">Instant Liquidity</h4>
+<p class="text-on-surface-variant text-sm">Funds deployed directly to your executive account within 4 hours.</p>
+</div>
+</div>
+</section>
+<!-- Testimonials -->
+<section class="py-32 bg-surface-container-lowest">
+<div class="max-w-7xl mx-auto px-8">
+<div class="grid grid-cols-1 lg:grid-cols-4 gap-12">
+<div class="lg:col-span-1">
+<h2 class="font-headline text-4xl font-bold mb-6">Executive Voices</h2>
+<p class="text-on-surface-variant mb-8">Trusted by industry leaders worldwide for confidential capital management.</p>
+<div class="flex gap-2">
+<button class="p-3 rounded-full border border-outline-variant/20 hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<button class="p-3 rounded-full border border-outline-variant/20 hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined">arrow_forward</span>
+</button>
+</div>
+</div>
+<div class="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-8">
+<div class="p-8 bg-surface-container rounded-2xl space-y-6">
+<div class="flex text-secondary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+<p class="italic text-on-surface leading-relaxed">"The speed of deployment was unprecedented. Global Ledger understood our liquidity needs and acted as a true strategic partner, not just a lender."</p>
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-surface-container-high overflow-hidden">
+<img alt="Executive Portrait" data-alt="professional headshot of a mature business executive with a confident smile in a boardroom setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCAH7imedJvsE4NPlSqnO7bGZJlev3IxymjTKm95e9MTG9_Y7Bu4N0hr7EsOFOZG2uunLiO5VrhRJxoe2VQG-fbLqrQ73J6QkYcz0E0jWuE6mTTa4kmV2ydcPl7oYD_Dzr12iJf01uibHHM-CSjQKGRP5FjF7833rPC7eXVcy6zIKt5igp4HCPUFXcUppKv8bDoLM0TNRNIQKatZ9kPqFzGRgfHZxwZmCZ71zpRlevOn_UGlOAk0Rf8S0n4aMUjPIm1Ho1i8fYsxn0f"/>
+</div>
+<div>
+<p class="font-headline font-bold">Marcus Chen</p>
+<p class="text-xs text-on-surface-variant uppercase tracking-tighter">CTO, Meridian Systems</p>
+</div>
+</div>
+</div>
+<div class="p-8 bg-surface-container rounded-2xl space-y-6">
+<div class="flex text-secondary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+<p class="italic text-on-surface leading-relaxed">"Transparency is rare in institutional financing. With Global Ledger, every term was clear from day one. Their platform is a masterpiece of efficiency."</p>
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-surface-container-high overflow-hidden">
+<img alt="Executive Portrait" data-alt="close up portrait of a professional female executive in a modern office with natural light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDa12y34t-tvSKZOKYvGMC_E8l8Mc2EAKOVhtrvKYgIXUe2syN_hEMzNU1ipPfebW8tm8WWLU_EYHZYuQ6IS7sbOo4gkigncDnA-Ed678qpl3f-vJeJd_dLVv01Q3gXCQ4yojK7SsBMNWsvBB-ic0uwIg6n-gAuwgkETnsB5AGEjqpcRGjugZdQAKpriDIsGKp0fBsIMcVJUFDkbh1poAf5csTLvZHQnieJPJ845tC1Nq1c2CSKAWmgHxVPFE0S9sTgwEfPURT8wgdx"/>
+</div>
+<div>
+<p class="font-headline font-bold">Elena Rodriguez</p>
+<p class="text-xs text-on-surface-variant uppercase tracking-tighter">Director, Venture Capital One</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Final CTA -->
+<section class="py-32 relative overflow-hidden">
+<div class="absolute inset-0 hero-gradient opacity-10"></div>
+<div class="max-w-4xl mx-auto px-8 text-center relative z-10 space-y-8">
+<h2 class="font-headline text-4xl md:text-6xl font-extrabold tracking-tight">Secure Your Future with <span class="text-secondary">Sovereign Capital</span></h2>
+<p class="text-on-surface-variant text-xl">Join over 15,000 professionals managing their capital through the Ledger terminal.</p>
+<div class="flex flex-col sm:flex-row justify-center gap-6 pt-8">
+<button onclick="goRegister()" class="px-12 py-5 bg-secondary-container text-white font-headline font-black uppercase tracking-widest rounded-xl hover:scale-105 transition-transform shadow-2xl shadow-secondary-container/30">
+    สมัครสมาชิก
+</button>
+<a href="/index.html" class="px-12 py-5 bg-surface-container-high text-on-surface font-headline font-black uppercase tracking-widest rounded-xl border border-outline-variant/20 hover:bg-surface-bright transition-colors text-center">
+    เข้าสู่ระบบ
+</a>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-[#0d1322] w-full border-t border-[#44474e]/15">
+<div class="max-w-7xl mx-auto px-8 py-12 flex flex-col md:flex-row justify-between items-center gap-6">
+<div class="flex flex-col items-center md:items-start gap-4">
+<span class="font-['Manrope'] font-black text-[#dde2f8] text-xl">Global Ledger</span>
+<p class="text-[#b4c5ff] font-['Inter'] text-sm tracking-wide text-center md:text-left">© 2024 Global Ledger Executive Financing. All rights reserved.</p>
+</div>
+<div class="flex flex-wrap justify-center gap-8">
+<a class="text-[#c5c6cf] font-['Inter'] text-sm tracking-wide hover:text-[#b4c5ff] underline-offset-4 hover:underline transition-colors" href="#">Institutional Terms</a>
+<a class="text-[#c5c6cf] font-['Inter'] text-sm tracking-wide hover:text-[#b4c5ff] underline-offset-4 hover:underline transition-colors" href="#">Privacy Protocol</a>
+<a class="text-[#c5c6cf] font-['Inter'] text-sm tracking-wide hover:text-[#b4c5ff] underline-offset-4 hover:underline transition-colors" href="#">Liquidity Desk</a>
+<a class="text-[#c5c6cf] font-['Inter'] text-sm tracking-wide hover:text-[#b4c5ff] underline-offset-4 hover:underline transition-colors" href="#">Contact Sovereign</a>
+</div>
+</div>
+</footer>
+
+<script>
+function goLogin(){
+    window.location.href = "/index.html";
+}
+
+function goRegister(){
+    window.location.href = "/register.html";
+}
+
+// 🔥 ถ้ามี token → เข้าหน้า dashboard เลย
+const token = localStorage.getItem("token");
+if(token){
+    window.location.href = "/dashboard.html";
+}
+</script>
+</body></html>

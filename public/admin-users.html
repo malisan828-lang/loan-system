@@ -106,21 +106,76 @@ async function loadPendingUsers(){
 }
 
 /* อนุมัติผู้ใช้ */
-async function approveUser(id){
-    if(!confirm("ยืนยันการอนุมัติผู้ใช้นี้?")) return;
+function approveUser(id){
 
-    await fetch("/api/admin/approve-user/" + id,{
-    method:"POST",
-    headers:{
-        "Authorization": token
-    }
-});
+    showConfirm("ยืนยันการอนุมัติผู้ใช้นี้?", async ()=>{
 
-    loadPendingUsers();
+        const res = await fetch("/api/admin/approve-user/" + id,{
+            method:"POST",
+            headers:{
+                "Authorization": token
+            }
+        });
+
+        const result = await res.json();
+
+        if(result.success){
+            showToast("อนุมัติสำเร็จ");
+            loadPendingUsers();
+        }else{
+            showToast("เกิดข้อผิดพลาด");
+        }
+
+    });
+
 }
 
 loadPendingUsers();
-</script>
 
+let confirmCallback = null;
+
+function showConfirm(message, callback){
+  document.getElementById("confirmMessage").innerText = message;
+  document.getElementById("confirmModal").classList.add("active");
+  confirmCallback = callback;
+}
+
+function closeConfirm(){
+  document.getElementById("confirmModal").classList.remove("active");
+}
+
+async function handleConfirm(){
+  closeConfirm();
+  if(confirmCallback){
+    await confirmCallback();
+  }
+}
+
+function showToast(message){
+
+  const toast = document.getElementById("toast");
+
+  toast.innerText = message;
+  toast.classList.add("show");
+
+  setTimeout(()=>{
+    toast.classList.remove("show");
+  }, 2500);
+}
+</script>
+<!-- CONFIRM MODAL -->
+<div id="confirmModal" class="modal-overlay">
+  <div class="modal-box">
+    <h3>ยืนยัน</h3>
+    <p id="confirmMessage"></p>
+
+    <div class="modal-buttons">
+      <button class="btn cancel" onclick="closeConfirm()">ยกเลิก</button>
+      <button class="btn success" onclick="handleConfirm()">ตกลง</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
 </body>
 </html>

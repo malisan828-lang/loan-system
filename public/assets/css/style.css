@@ -221,46 +221,6 @@ tbody tr:nth-child(even) {
 .dashboard-table .green { color: #16a34a !important; }
 .dashboard-table .red { color: #dc2626 !important; }
 
-/* ================= MODAL SUCCESS ================= */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.6);
-  display: none;
-  justify-content: center;
-  align-items: center;
-  z-index: 999;
-}
-
-.modal-box {
-  background: #ffffff;
-  padding: 40px 50px;
-  border-radius: 16px;
-  text-align: center;
-  width: 400px;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-  animation: popUp 0.3s ease;
-}
-
-.check-icon {
-  width: 70px;
-  height: 70px;
-  background: #16a34a;
-  color: white;
-  font-size: 40px;
-  line-height: 70px;
-  border-radius: 50%;
-  margin: -70px auto 20px;
-  box-shadow: 0 5px 15px rgba(22,163,74,0.4);
-}
-
-.modal-box h3 {
-  margin-top: 10px;
-  color: #111827;
-}
 
 .modal-box p {
   color: #6b7280;
@@ -692,3 +652,202 @@ tbody tr:nth-child(even) {
   border-radius:10px;
   font-weight:600;
 }
+
+/* badge */
+.badge-green{
+background:#16a34a;
+color:white;
+padding:4px 10px;
+border-radius:6px;
+font-size:12px;
+}
+
+.badge-red{
+background:#dc2626;
+color:white;
+padding:4px 10px;
+border-radius:6px;
+font-size:12px;
+}
+
+/* ปุ่มยกเลิก */
+.btn-cancel{
+background:#ef4444;
+color:white;
+border:none;
+padding:6px 12px;
+border-radius:6px;
+cursor:pointer;
+transition:0.2s;
+}
+
+.btn-cancel:hover{
+background:#dc2626;
+}
+
+/* ทำตารางดูโปร */
+.dashboard-table th{
+background:#facc15;
+color:#000;
+}
+
+.dashboard-table td{
+text-align:center;
+}
+
+.modal-overlay{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.65);
+display:flex;
+align-items:center;
+justify-content:center;
+z-index:9999;
+visibility:hidden;
+opacity:0;
+transition:0.2s;
+}
+
+.modal-overlay.active{
+visibility:visible;
+opacity:1;
+}
+
+.modal-box{
+background:#1f2a3a;
+padding:25px;
+border-radius:12px;
+width:320px;
+text-align:center;
+box-shadow:0 10px 30px rgba(0,0,0,0.5);
+color:white;
+}
+
+.modal-buttons{
+display:flex;
+justify-content:center;
+gap:10px;
+margin-top:15px;
+}
+
+.btn{
+padding:8px 18px;
+border:none;
+border-radius:6px;
+cursor:pointer;
+}
+
+.btn.success{
+background:#22c55e;
+color:white;
+}
+
+.btn.cancel{
+background:#e5e7eb;
+color:#000;
+}
+
+/* ===== FINAL MODAL FIX ===== */
+
+.modal-overlay{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.65);
+display:flex;
+align-items:center;
+justify-content:center;
+z-index:9999;
+visibility:hidden;
+opacity:0;
+transition:0.2s;
+}
+
+.modal-overlay.active{
+visibility:visible;
+opacity:1;
+}
+
+.modal-box{
+background:#1e293b;
+padding:30px;
+border-radius:16px;
+width:340px;
+text-align:center;
+box-shadow:0 15px 40px rgba(0,0,0,0.6);
+color:white;
+}
+
+/* 🔥 แก้ "ยืนยัน" */
+.modal-box h3{
+color:#ffffff !important;
+font-size:20px;
+font-weight:700;
+margin-bottom:10px;
+}
+
+/* ข้อความรอง */
+.modal-box p{
+color:#cbd5e1;
+font-size:14px;
+}
+
+/* ปุ่ม */
+.modal-buttons{
+display:flex;
+justify-content:center;
+align-items:center;
+gap:16px;
+margin-top:20px;
+}
+
+/* ขนาดปุ่มเท่ากัน */
+.modal-buttons .btn{
+min-width:110px;
+padding:10px 20px;
+border-radius:10px;
+font-weight:600;
+}
+
+/* สีปุ่ม */
+.btn.success{
+background:#22c55e;
+color:white;
+}
+
+.btn.cancel{
+background:#e5e7eb;
+color:#111;
+}
+
+/* ===== TOAST SUCCESS ===== */
+.toast{
+position:fixed;
+top:30px;
+left:50%;
+transform:translateX(-50%);
+background:#22c55e;
+color:white;
+padding:14px 26px;
+border-radius:12px;
+font-weight:600;
+box-shadow:0 10px 25px rgba(0,0,0,0.4);
+opacity:0;
+pointer-events:none;
+transition:0.3s;
+z-index:9999;
+}
+
+/* ตอนแสดง */
+.toast.show{
+opacity:1;
+top:50px;
+}
+
+
+
