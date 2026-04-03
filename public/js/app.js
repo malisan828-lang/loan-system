@@ -12,11 +12,11 @@ document.addEventListener("DOMContentLoaded", function () {
     const currentPage = window.location.pathname.split("/").pop();
 
     const navItems = [
-        { name: "Dashboard", file: "dashboard.html" },
-        { name: "ลูกค้าของฉัน", file: "customers.html" },
+        { name: "ตรางใบงาน", file: "dashboard.html" },
+        { name: "ลงใบงาน", file: "customers.html" },
         { name: "เปิดสัญญาใหม่", file: "new-loan.html" },
-        { name: "บิลค่าใช้จ่าย", file: "daily-report.html" },
-        { name: "ส่งสลิปโอนเงิน", file: "send-slip.html" }
+        { name: "เบิกเงินบ้าน", file: "daily-report.html" },
+        { name: "อัพสลิปส่งยอด", file: "send-slip.html" }
     ];
 
     // 🔥 เมนูเฉพาะ ADMIN
