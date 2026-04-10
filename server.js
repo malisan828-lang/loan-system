@@ -1458,21 +1458,33 @@ loans.forEach(loan=>{
 
     const created = new Date(loan.createdAt);
 
-    // ===== รายวัน (ต้องเก็บทุก active) =====
-    if(loan.status === "active"){
-        teamMap[teamName].dailyFull += loan.installment || 0;
-    }
+     // ===== รายวัน = ยอดปล่อยจริงวันนี้ =====
+if(created >= startToday){
 
-    // ===== เปิดใหม่วันนี้ =====
-    if(created >= startToday){
-        teamMap[teamName].newToday++;
-        releasedToday += loan.receivedAmount || 0;
-    }
+    teamMap[teamName].dailyFull += loan.receivedAmount || 0;
+
+}
+
+   // ===== เปิดใหม่วันนี้ =====
+if(created >= startToday){
+    teamMap[teamName].newToday++;
+    releasedToday += loan.receivedAmount || 0;
+}
 
     // ===== รายเดือน (แม่นตามจำนวนวันจริง) =====
-    if(loan.status === "active"){
-        teamMap[teamName].monthlyFull += (loan.installment || 0) * daysInMonth;
-    }
+    // ===== รายเดือน (นับตามวันที่ยังเหลือจริงในเดือนนี้) =====
+if(loan.status === "active"){
+
+    const remainDays =
+        (loan.loanDays || 0) - (loan.paidDays || 0);
+
+    const dueThisMonth =
+        Math.min(remainDays, daysInMonth);
+
+    teamMap[teamName].monthlyFull +=
+        dueThisMonth * (loan.installment || 0);
+
+}
 
     // ===== active =====
     if(loan.status === "active"){
