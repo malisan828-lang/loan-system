@@ -646,6 +646,14 @@ loan.remainingAmount = 0;
 loan.status = "closed";
 }
 
+
+// 🔥 reset overdue เมื่อมีการจ่าย
+loan.overdueDays = 0;
+loan.overdueAmount = 0;
+
+if(loan.status !== "closed"){
+    loan.status = "active";
+}
 // ==========================
 // 🔥 save
 // ==========================
@@ -782,6 +790,8 @@ oldLoan.closedDate = new Date();
 
 await oldLoan.save();
 
+const oldHistory = oldLoan.paymentHistory || [];
+
 /* =========================
    สร้างสัญญาใหม่
 ========================= */
@@ -838,6 +848,8 @@ todayPaid: true,
 
 paymentHistory: [
 
+...oldHistory, // 🔥 เอาประวัติเก่ามาด้วย
+
 {
 amount: installment,
 type: "paid",
@@ -853,6 +865,7 @@ date: new Date()
 ]
 
 });
+
 
 await newLoanDoc.save();
 
@@ -1356,7 +1369,7 @@ res.json({success:false});
 app.get("/api/dashboard/summary", authMiddleware, async (req, res) => {
 try{
 
-// ===== วันที่ =====
+// ===== เวลา =====
 const startToday = new Date();
 startToday.setHours(0,0,0,0);
 
@@ -1364,21 +1377,18 @@ const startMonth = new Date();
 startMonth.setDate(1);
 startMonth.setHours(0,0,0,0);
 
-// จำนวนวันในเดือน (แม่นจริง)
-const today = new Date();
-const daysInMonth = new Date(
-    today.getFullYear(),
-    today.getMonth()+1,
-    0
-).getDate();
+const now = new Date();
 
-// ===== โหลดข้อมูล =====
-const loans = await Loan.find().populate({
+// ===== โหลดข้อมูล (เอาเฉพาะ active พอ) =====
+const loans = await Loan.find({
+    status: "active"
+}).populate({
     path:"employeeId",
     populate:{ path:"teamId" }
 });
 
-if(!loans || loans.length === 0){
+// ===== ถ้าไม่มีข้อมูล =====
+if(!loans.length){
     return res.json({
         totalCapital: 0,
         releasedToday: 0,
@@ -1395,7 +1405,7 @@ let totalCapital = 0;
 let releasedToday = 0;
 let collectedToday = 0;
 
-// ===== loop loans =====
+// ===== loop =====
 loans.forEach(loan=>{
 
     const team = loan.employeeId?.teamId;
@@ -1403,155 +1413,195 @@ loans.forEach(loan=>{
 
     const teamName = team.name;
 
-    // ===== สร้างทีม =====
     if(!teamMap[teamName]){
         teamMap[teamName] = {
             name: team.name,
             members: {},
 
-            // ===== รายวัน =====
+            // daily
             dailyFull:0,
             dailyCollect:0,
             dailyPercent:0,
             dailyProfit:0,
 
-            // ===== รายเดือน =====
+            // monthly
             monthlyFull:0,
             monthlyCollect:0,
             monthlyPercent:0,
             monthlyTotalProfit:0,
 
-            // ===== รวม =====
             totalProfit:0,
 
-            // ===== ลูกค้า =====
             newToday:0,
             active:0,
 
-            // ===== KPI =====
-            badDebt:0,
             waitingCut:0,
             loss4x:0,
             diffLossCollect:0,
-            avg3month:0,
-            loss3month:0,
             lossNotOverCollect:0,
 
-            // ===== อื่น =====
-            fail:0,
-            star:""
+            avg3month: 0,
+            loss3month: 0,
+
+            star:"",
+
+            // 🔥 ใช้กันซ้ำวัน
+            _countedDays: new Set()
         };
     }
+
+    const t = teamMap[teamName];
 
     // ===== สมาชิก =====
     const user = loan.employeeId;
-    if(user && user.username){
-        const username = user.username.trim();
-        teamMap[teamName].members[username] = {
-            name: username,
-            image: user.profileImage || ""
+    if(user?.username){
+        t.members[user.username] = {
+            name:user.username,
+            image:user.profileImage || ""
         };
     }
 
-    // ===== เงินรวม =====
+    // ===== เงินทุน =====
     totalCapital += loan.remainingAmount || 0;
 
     const created = new Date(loan.createdAt);
 
-     // ===== รายวัน = ยอดปล่อยจริงวันนี้ =====
-if(created >= startToday){
+    // ===== เปิดใหม่วันนี้ =====
+    if(created >= startToday){
+        t.newToday++;
+        releasedToday += loan.receivedAmount || 0;
 
-    teamMap[teamName].dailyFull += loan.receivedAmount || 0;
-
-}
-
-   // ===== เปิดใหม่วันนี้ =====
-if(created >= startToday){
-    teamMap[teamName].newToday++;
-    releasedToday += loan.receivedAmount || 0;
-}
-
-    // ===== รายเดือน (แม่นตามจำนวนวันจริง) =====
-    // ===== รายเดือน (นับตามวันที่ยังเหลือจริงในเดือนนี้) =====
-if(loan.status === "active"){
-
-    const remainDays =
-        (loan.loanDays || 0) - (loan.paidDays || 0);
-
-    const dueThisMonth =
-        Math.min(remainDays, daysInMonth);
-
-    teamMap[teamName].monthlyFull +=
-        dueThisMonth * (loan.installment || 0);
-
-}
-
-    // ===== active =====
-    if(loan.status === "active"){
-        teamMap[teamName].active++;
+        // ✔ dailyFull = ดอกของสัญญาใหม่วันนี้
+        t.dailyFull += loan.dailyInterest || 0;
     }
 
-    // ===== เก็บ =====
+    // ===== active =====
+    t.active++;
+
+    // ===== overdue คำนวณจริง =====
+const lastPayment = loan.paymentHistory?.slice(-1)[0];
+
+const lastDate = lastPayment
+    ? new Date(lastPayment.date)
+    : new Date(loan.createdAt);
+
+const diffDays = Math.floor((now - lastDate) / (1000 * 60 * 60 * 24));
+
+if(diffDays > 1){
+
+    loan.overdueDays = diffDays;
+    loan.overdueAmount = diffDays * (loan.dailyInterest || 0);
+
+    t._overdueSum = (t._overdueSum || 0) + loan.overdueAmount;
+
+    if(diffDays <= 90){
+    t._overdue90 = (t._overdue90 || 0) + loan.overdueAmount;
+   }
+
+}else{
+    loan.overdueDays = 0;
+    loan.overdueAmount = 0;
+
+}
+
+
+    // 🔥 expectedToday = ดอกของ loan ปัจจุบันจริง
+t._expectedToday = (t._expectedToday || 0) + (loan.dailyInterest || 0);
+
+    // ===== payment =====
     (loan.paymentHistory || []).forEach(p=>{
 
         const payDate = new Date(p.date);
 
         if(p.type === "paid"){
 
-            // วันนี้
-            if(payDate >= startToday){
-                teamMap[teamName].dailyCollect += p.amount || 0;
-                collectedToday += p.amount || 0;
-            }
+    // ===== วันนี้ =====
+    if(payDate >= startToday){
 
-            // เดือนนี้
-            if(payDate >= startMonth){
-                teamMap[teamName].monthlyCollect += p.amount || 0;
-            }
+    // 🔥 เอาเฉพาะ payment หลัง start ของ loan นี้
+    const loanStart = new Date(loan.startDate || loan.createdAt);
 
-        }
+    if(payDate >= loanStart){
+        t.dailyCollect += p.amount || 0;
+        collectedToday += p.amount || 0;
+    }
+}
+
+     
+    // ===== เดือนนี้ =====
+    if(payDate >= startMonth){
+        t.monthlyCollect += p.amount || 0;
+
+        const key = loan._id + "_" + payDate.toDateString();
+
+        if(!t._countedDays.has(key)){
+
+    const loanStart = new Date(loan.startDate || loan.createdAt);
+
+    // 🔥 นับเฉพาะวันที่อยู่ในช่วง loan นี้
+    if(payDate >= loanStart){
+        t.monthlyFull += loan.dailyInterest || 0;
+        t._countedDays.add(key);
+    }
+}
+    }
+
+    // 🔥 KPI 90 วัน (แยกออกมาเลย)
+    const daysAgo = Math.floor((now - payDate) / (1000*60*60*24));
+
+    if(daysAgo <= 90){
+        t._collect90 = (t._collect90 || 0) + (p.amount || 0);
+    }
+}
 
     });
 
 });
 
-// ===== คำนวณ =====
+// ===== FINAL CALC =====
 Object.values(teamMap).forEach(t=>{
 
-    // ===== รายวัน =====
-    t.dailyPercent = t.dailyFull 
-        ? (t.dailyCollect / t.dailyFull * 100) 
-        : 0;
+
+    const expectedToday = t._expectedToday || 0;
+
+    // ===== KPI 3 เดือน =====
+
+const collect90 = t._collect90 || 0;
+const overdue90 = t._overdue90 || 0;
+
+// เฉลี่ยต่อวัน (90 วัน)
+const days = Math.min(90, Math.max(1,
+  Math.floor((now - startMonth) / (1000*60*60*24)) + 1
+));
+
+t.avg3month = days ? (collect90 / days) : 0;
+
+// ยอดเสีย
+t.loss3month = overdue90;
+
+    // ===== DAILY =====
+    t.dailyPercent = expectedToday
+    ? Math.min(100, (t.dailyCollect / expectedToday * 100))
+    : 0;
 
     t.dailyProfit = t.dailyCollect;
 
-    // ===== รายเดือน =====
-    t.monthlyPercent = t.monthlyFull 
-        ? (t.monthlyCollect / t.monthlyFull * 100) 
-        : 0;
+    // ===== MONTHLY (SUM จริง) =====
+
+   t.monthlyPercent = t.monthlyFull
+    ? Math.min(100, (t.monthlyCollect / t.monthlyFull * 100))
+    : 0;
 
     t.monthlyTotalProfit = t.monthlyCollect;
 
-    // ===== รวม =====
-    t.totalProfit = t.monthlyTotalProfit;
-
-    // ===== ยอดเสีย =====
-    t.badDebt = Math.max(0, t.monthlyFull - t.monthlyCollect);
-
     // ===== KPI =====
-    t.waitingCut = t.badDebt;
+    t.waitingCut = t._overdueSum || 0;
 
-    t.loss4x = t.badDebt * 4;
+    t.loss4x = t.dailyFull * 4;
 
-    t.diffLossCollect = Math.max(0, t.monthlyCollect - t.badDebt);
+    t.diffLossCollect = Math.max(0, t.loss4x - t.waitingCut);
 
-    t.avg3month = Math.floor(t.monthlyCollect / 3);
-
-    t.loss3month = Math.floor(t.badDebt * 0.3);
-
-    t.lossNotOverCollect = t.badDebt <= t.monthlyCollect 
-        ? t.badDebt 
-        : t.monthlyCollect;
+    t.lossNotOverCollect = Math.min(t.waitingCut, t.monthlyCollect);
 
     // ===== ดาว =====
     if(t.monthlyPercent >= 80){
@@ -1564,12 +1614,20 @@ Object.values(teamMap).forEach(t=>{
         t.star = "";
     }
 
-    // ===== สมาชิก =====
+    t.totalProfit = t.monthlyTotalProfit;
+
+    // ===== members =====
     t.members = Object.values(t.members);
+
+    delete t._expectedToday;
+    delete t._countedDays;
+    delete t._overdueSum;
+    delete t._collect90;
+    delete t._overdue90;
 
 });
 
-// ===== Ranking =====
+// ===== ranking =====
 const ranking = Object.values(teamMap)
 .sort((a,b)=> b.totalProfit - a.totalProfit);
 
@@ -1656,6 +1714,13 @@ app.post("/api/upload-profile", upload.single("image"), async (req, res) => {
 
 app.post("/api/loans/:loanId/cancel-payment/:index", authMiddleware, async (req,res)=>{
 try{
+
+    if(req.user.role !== "admin"){
+    return res.status(403).json({
+        success:false,
+        message:"เฉพาะแอดมินเท่านั้น"
+    });
+}
 
 const loan = await Loan.findById(req.params.loanId);
 if(!loan) return res.status(404).json({success:false});
