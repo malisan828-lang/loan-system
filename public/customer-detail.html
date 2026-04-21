@@ -197,7 +197,7 @@
 <th>วันที่</th>
 <th>ประเภท</th>
 <th>จำนวนเงิน</th>
-<th>จัดการ</th>
+<th id="actionHeader">จัดการ</th>
 </tr>
 </thead>
 
@@ -238,6 +238,13 @@ const result = await res.json();
 const loans = result.customers;
 
 const loan = loans.find(l => l._id === loanId);
+
+const user = JSON.parse(localStorage.getItem("user") || "{}");
+    const isAdmin = user.role === "admin";
+
+    if(!isAdmin){
+        document.getElementById("actionHeader").style.display = "none";
+    }
 
 if(!loan){
 alert("ไม่พบข้อมูล");
@@ -300,6 +307,7 @@ ${p.type === "paid" ? "จ่าย" : "ค้าง"}
 
 <td>${format(p.amount)}</td>
 
+${isAdmin ? `
 <td>
 ${p.type === "paid" ? `
 <button class="btn-cancel"
@@ -308,6 +316,7 @@ onclick="cancelPayment(${index})">
 </button>
 ` : "-"}
 </td>
+` : ""}
 `;
 
 tbody.appendChild(row);
