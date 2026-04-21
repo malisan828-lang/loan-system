@@ -186,13 +186,16 @@ document.getElementById("loginForm").addEventListener("submit", async function(e
         if(res.ok && data.success){
 
             // เก็บ token
-            localStorage.setItem("token", data.token);
+        localStorage.setItem("token", data.token);
 
-            // 🔥 เก็บ user (ตัวแก้ปัญหาหลัก)
-            localStorage.setItem("user", JSON.stringify(data.user));
+        // 🔥 เก็บ user
+         localStorage.setItem("user", JSON.stringify(data.user));
 
-            // ไป dashboard
-            window.location.href = "/dashboard.html";
+         // ✅ เพิ่มบรรทัดนี้
+         localStorage.setItem("role", data.user.role);
+
+          // ไป dashboard
+          window.location.href = "/dashboard.html";
 
         }else{
 
