@@ -19,7 +19,7 @@ required:true
 
 status:{
 type:String,
-default:"active"
+default:"active" // active | overdue | bad_debt | closed
 },
 
 hasGuarantor:{
@@ -121,7 +121,22 @@ type:Boolean,
 default:true
 },
 
+// ดอกค้างเดิม (ใช้ต่อได้)
 overdueInterest:{
+type:Number,
+default:0
+},
+
+// ===== KPI REAL (เพิ่มใหม่) =====
+
+// จำนวนวันที่ค้าง
+overdueDays:{
+type:Number,
+default:0
+},
+
+// ยอดค้างจริง
+overdueAmount:{
 type:Number,
 default:0
 },
@@ -133,7 +148,7 @@ amount: {
 type: Number
 },
 type: {
-type: String
+type: String // paid | overdue | sent
 },
 date: {
 type: Date,
@@ -179,6 +194,5 @@ default:[]
 }
 
 });
-
 
 module.exports = mongoose.model("Loan",LoanSchema);
